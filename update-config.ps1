@@ -1,0 +1,1 @@
+Copy-Item ./src/configs/rivalbot-config-dev.json ./src/configs/rivalbot-config.json
