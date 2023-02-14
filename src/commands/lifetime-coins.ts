@@ -7,15 +7,14 @@ export const data = new SlashCommandBuilder()
 	.setDescription('Update your lifetime coins.')
 	.addStringOption(option =>
 		option.setName("coins")
-			.setDescription("The exact string your game shows your lifetime coins as (e.g. \"272.56B\").")
+			.setDescription("The exact string your game shows your lifetime coins as (e.g. 272.56B).")
 			.setRequired(true));
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	// await interaction.deferReply({ ephemeral: true });
-	await interaction.deferReply({ });
+	await interaction.deferReply({ ephemeral: false });
 
 	const timestamp = interaction.createdTimestamp;
 	const timestampPrettyText = new Date(timestamp).toString();
 	await coinManager.update(interaction.user.id, interaction.options.getString("coins"), interaction.createdTimestamp);
-	await interaction.editReply({ content: `User ${interaction.user.id} submitted ${interaction.options.getString("coins")} coins at ${timestampPrettyText}.` });
+	await interaction.editReply({ content: `User <@${interaction.user.id}> submitted \`${interaction.options.getString("coins")}\` coins at ${timestampPrettyText}.` });
 }

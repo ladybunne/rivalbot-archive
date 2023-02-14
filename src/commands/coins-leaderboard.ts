@@ -6,5 +6,5 @@ export const data: SlashCommandBuilder = new SlashCommandBuilder()
 	.setDescription('Shows the lifetime coins leaderboard.');
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	await interaction.reply({ embeds: [coinManager.embed()] });
+	await interaction.reply({ embeds: [coinManager.embed()], ephemeral: false });
 }

@@ -7,7 +7,11 @@ import { Command } from './commands/commands';
 import * as coinManager from "./lifetime-coins/lifetime-coins-manager"
 
 // Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [
+	GatewayIntentBits.Guilds,
+	GatewayIntentBits.GuildMessages,
+	GatewayIntentBits.MessageContent,
+	GatewayIntentBits.GuildMembers,] });
 
 // Load commands
 const commands = new Collection<string, Command>();

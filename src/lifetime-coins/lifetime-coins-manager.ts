@@ -1,6 +1,8 @@
 import { EmbedBuilder } from '@discordjs/builders';
 import fs from 'fs/promises';
 
+// TODO Consider sqlite for data storage.
+
 const lifetimeCoinsFile = "lifetime-coins.json";
 
 type LifetimeCoinsEntry = {
