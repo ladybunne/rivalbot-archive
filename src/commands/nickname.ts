@@ -23,11 +23,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	const member = await interaction.guild.members.fetch()
 		.then((members) => members.find(member => member.id == interaction.options.getUser("user").id));
 
-	const nickname = interaction.options.getString("nickname")
+	const nickname = interaction.options.getString("nickname");
+	const oldNickname = member.nickname;
 
 	await member.setNickname(nickname)
 		.then((user) => interaction.editReply({
-			content: `User ${interaction.user} set ${user.user.username}'s nickname to \`${nickname}\`.` }))
+			content: `User ${interaction.user} changed ${user.user.username}'s nickname from \`${oldNickname}\` to \`${nickname}\`.` }))
 		.catch((error) => interaction.editReply({
-			content: `User ${interaction.user} failed to set ${interaction.options.getUser("user").username}'s nickname to \`${nickname}\` (error: ${error}).` }));
+			content: `User ${interaction.user} failed to change ${interaction.options.getUser("user").username}'s nickname from \`${oldNickname}\` to \`${nickname}\` (error: ${error}).` }));
 }
