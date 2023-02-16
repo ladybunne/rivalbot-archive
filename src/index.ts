@@ -2,9 +2,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Client, EmbedBuilder, Collection, GatewayIntentBits, TextChannel } from 'discord.js';
-import { token, channelBotDevId } from './configs/rivalbot-config.json';
+import { token, guildId } from './configs/rivalbot-config.json';
 import { Command } from './commands/commands';
-import * as coinManager from "./lifetime-coins/lifetime-coins-manager"
+import * as coinManager from "./lifetime-coins/lifetime-coins-manager";
+import * as timerManager from "./timers/timer-manager";
 
 // Create a new client instance
 const client = new Client({ intents: [
@@ -35,7 +36,12 @@ client.once('ready', async () => {
 
 	client.user.setActivity("with towers.");
 
-	coinManager.loadData()
+	const guild = await client.guilds.fetch(guildId);
+	await guild.members.fetch();
+
+	await timerManager.start(guild);
+
+	await coinManager.loadData();
 	
 	// const exampleEmbed = new EmbedBuilder()
 	// 	.setDescription("🐰");

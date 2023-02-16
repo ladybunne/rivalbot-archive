@@ -4,5 +4,9 @@
 	"guildId": "",
 
 	"channelGeneralId": "",
-	"channelBotDevId": ""
+	"channelBotDevId": "",
+
+	"channelTournamentTimerId": "",
+	"channelEventTimerId": "",
+	"channelMissionsTimerId": ""
 }
