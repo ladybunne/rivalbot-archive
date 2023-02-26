@@ -49,15 +49,15 @@ function getActualCoins(entry: LifetimeCoinsEntry): number {
 function getUnitMultiplier(unit: string): number {
 	switch(unit.toLowerCase()) {
 		case "k": 
-			return 1000;
+			return 1_000;
 		case "m":
-			return 1000000;
+			return 1_000_000;
 		case "b":
-			return 1000000000;
+			return 1_000_000_000;
 		case "t":
-			return 1000000000000;
+			return 1_000_000_000_000;
 		case "q":
-			return 1000000000000000;
+			return 1_000_000_000_000_000;
 		default:
 			return 1;
 	}
@@ -76,7 +76,12 @@ function formattedLeaderboard(guild: Guild): string {
 	const output = [...data.entries()]
 		.sort(sortMap)
 		// Map to text output.
-		.map(([user, entries]) => `**${guild.members.cache.get(user).user.username}**: ${entries.slice(-1)[0].coins}`)
+		.map(([user, entries], i) => {
+			return `${i == 4 ? "🙃" : ""}` + 
+				`**${guild.members.cache.get(user).user.username}**` + 
+				`${i == 4 ? "🙃" : ""}` + 
+				`: ${entries.slice(-1)[0].coins}`;
+		})
 		// Condense into one string.
 		.reduce((acc, curr, index) => `${acc}${index + 1}. ${curr}\n`, "");
 	
