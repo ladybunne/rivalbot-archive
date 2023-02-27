@@ -3,7 +3,6 @@ import { channelTournamentTimerId, channelEventTimerId, channelMissionsTimerId }
 import schedule from 'node-schedule';
 import { handleError } from '../common';
 
-
 const rolloverTime = new Date().setHours(0, 0, 0, 0);
 const tomorrow = new Date(rolloverTime);
 const tournamentDays = [2, 5];
