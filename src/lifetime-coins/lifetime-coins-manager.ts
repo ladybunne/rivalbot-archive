@@ -34,16 +34,17 @@ export async function update(id: string, coins: string, timestamp: number) {
 	await saveData();
 }
 
-const parseCoins = /([0-9]+\.?[0-9]{0,2})([KkMmBbTtQq]?)/
+const parseCoins = /([0-9]+)\.?([0-9]{0,2})([KkMmBbTtQq]?)/
 
 function getActualCoins(entry: LifetimeCoinsEntry): number {
 	const matches = parseCoins.exec(entry.coins);
 	if(!matches) return 0;
-	const [ wholePart, decimalPart, unit ] = matches;
-	const wholePartInt = parseInt(wholePart);
-	const decimalPartInt = parseInt(decimalPart);
+	const [ _, wholePart, decimalPart, unit ] = matches;
+	const wholePartParsed = parseInt(wholePart);
+	const decimalPartParsed = parseFloat(`0.${decimalPart}`);
 	const multiplier = getUnitMultiplier(unit);
-	return wholePartInt * multiplier + decimalPartInt * multiplier * 0.01;
+	const output = wholePartParsed * multiplier + decimalPartParsed * multiplier;
+	return output;
 }
 
 function getUnitMultiplier(unit: string): number {
@@ -84,7 +85,7 @@ function formattedLeaderboard(guild: Guild): string {
 		.sort(sortMap)
 		// Map to text output.
 		.map(([user, entries], i) => {
-			const entry = entries.slice(-1)[0];
+			const entry = getMostRecentEntry(entries);
 			return `${i == 4 ? "🙃" : ""}` + 
 				`**${guild.members.cache.get(user).user.username}**` + 
 				`${i == 4 ? "🙃" : ""}` + 
