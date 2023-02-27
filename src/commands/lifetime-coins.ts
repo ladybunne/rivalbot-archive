@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, DataResolver } from "discord.js";
 import * as coinManager from "../lifetime-coins/lifetime-coins-manager"
+import { channelCoinsLeaderboard } from '../configs/rivalbot-config.json'
 
 
 export const data = new SlashCommandBuilder()
@@ -20,6 +21,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	const timestampPrettyText = new Date(timestamp).toString();
 	await coinManager.update(interaction.user.id, interaction.options.getString("coins"), interaction.createdTimestamp, interaction.guild);
 	const response = `User <@${interaction.user.id}> submitted \`${interaction.options.getString("coins")}\` coins at ${timestampPrettyText}.` +
-		`\n\nMore data to come here soon.`;
+		`\n\nSee the leaderboard channel here: <#${channelCoinsLeaderboard}>`;
 	await interaction.editReply({ content: response });
 }
