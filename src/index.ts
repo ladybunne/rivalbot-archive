@@ -42,17 +42,6 @@ client.once('ready', async () => {
 	await timerManager.start(guild);
 
 	await coinManager.loadData();
-	
-	// const exampleEmbed = new EmbedBuilder()
-	// 	.setDescription("🐰");
-
-	// client.channels.fetch(channelBotDevId)
-	// 	.then(channel => {
-	// 		if(channel instanceof TextChannel) {
-	// 			channel.send({ embeds: [exampleEmbed] })
-	// 		}
-	// })
-
 });
 
 client.on('interactionCreate', async interaction => {
