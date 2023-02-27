@@ -19,5 +19,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	const timestamp = interaction.createdTimestamp;
 	const timestampPrettyText = new Date(timestamp).toString();
 	await coinManager.update(interaction.user.id, interaction.options.getString("coins"), interaction.createdTimestamp);
-	await interaction.editReply({ content: `User <@${interaction.user.id}> submitted \`${interaction.options.getString("coins")}\` coins at ${timestampPrettyText}.` });
+	const response = `User <@${interaction.user.id}> submitted \`${interaction.options.getString("coins")}\` coins at ${timestampPrettyText}.` +
+		`\n\nMore data to come here soon.`;
+	await interaction.editReply({ content: response });
 }
