@@ -22,8 +22,8 @@ export async function start(guild: Guild) {
 	const update = async () => {
 		await updateChannel(guild);
 	}
-	schedule.scheduleJob("* */1 * * *", update);
-	console.log("Scheduled coins leaderboard to update every hour.");
+	schedule.scheduleJob("*/5 * * * *", update);
+	console.log("Scheduled coins leaderboard to update five minutes.");
 	await updateChannel(guild);
 }
 
