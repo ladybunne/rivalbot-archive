@@ -40,8 +40,7 @@ client.once('ready', async () => {
 	await guild.members.fetch();
 
 	await timerManager.start(guild);
-
-	await coinManager.loadData();
+	await coinManager.start(guild);
 });
 
 client.on('interactionCreate', async interaction => {
