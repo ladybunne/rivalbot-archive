@@ -82,8 +82,14 @@ function getMostRecentEntry(entries: LifetimeCoinsEntry[]): LifetimeCoinsEntry {
 }
 
 function getTimeSinceMostRecentEntry(entry: LifetimeCoinsEntry, now: Date): string {
-	const difference = Math.floor((now.getTime() - entry.timestamp) / 1000 / 60 / 60);
-	const display = difference > 24 ? `${Math.floor(difference/24)}d` : `${difference < 1 ? "just now" : `${difference}h`}`
+	const difference = Math.floor((now.getTime() - entry.timestamp) / 1000 / 60);
+	let display = `${Math.floor(difference) < 1 ? "just now" : `${Math.floor(difference)}m`}`
+	if(difference > 60 * 24) {
+		display = `${Math.floor(difference / 60 / 24)}d`
+	}
+	else if(difference > 60) {
+		display = `${Math.floor(difference / 60)}h`
+	}
 	return ` (_${display}_)`;
 }
 
