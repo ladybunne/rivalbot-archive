@@ -67,20 +67,29 @@ function getMostRecentEntry(entries: LifetimeCoinsEntry[]): LifetimeCoinsEntry {
 	return entries.reduce((acc, curr) => acc.timestamp > curr.timestamp ? acc : curr, emptyEntry);
 }
 
+function getTimeSinceMostRecentEntry(entry: LifetimeCoinsEntry, now: Date): string {
+	const difference = Math.floor((now.getTime() - entry.timestamp) / 1000 / 60 / 60);
+	const display = difference > 24 ? `${Math.floor(difference/24)}d` : `${difference}h`
+	return ` (_${display}_)`;
+}
+
 function sortMap(user1: [string, LifetimeCoinsEntry[]], user2: [string, LifetimeCoinsEntry[]]) {
 	return getActualCoins(getMostRecentEntry(user2[1])) - getActualCoins(getMostRecentEntry(user1[1]));
 }
 
 function formattedLeaderboard(guild: Guild): string {
+	const now = new Date(Date.now());
 	// Eventually, sort this via parsed coin quantities.
 	const output = [...data.entries()]
 		.sort(sortMap)
 		// Map to text output.
 		.map(([user, entries], i) => {
+			const entry = entries.slice(-1)[0];
 			return `${i == 4 ? "🙃" : ""}` + 
 				`**${guild.members.cache.get(user).user.username}**` + 
 				`${i == 4 ? "🙃" : ""}` + 
-				`: ${entries.slice(-1)[0].coins}`;
+				`: ${entry.coins}` +
+				`${getTimeSinceMostRecentEntry(entry, now)}`;
 		})
 		// Condense into one string.
 		.reduce((acc, curr, index) => `${acc}${index + 1}. ${curr}\n`, "");

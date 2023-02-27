@@ -21,7 +21,7 @@ export async function start(guild: Guild) {
 	}
 	schedule.scheduleJob("*/10 * * * *", update);
 	console.log("Scheduled timers to update every ten minutes.");
-	await updateTimers(guild);
+	// await updateTimers(guild);
 }
 
 async function updateTimers(guild: Guild) {
