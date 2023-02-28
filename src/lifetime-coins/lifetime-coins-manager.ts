@@ -23,7 +23,7 @@ export async function start(guild: Guild) {
 		await updateChannel(guild);
 	}
 	schedule.scheduleJob("*/5 * * * *", update);
-	console.log("Scheduled coins leaderboard to update five minutes.");
+	console.log("Scheduled coins leaderboard to update every five minutes.");
 	await updateChannel(guild);
 }
 
