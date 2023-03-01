@@ -1,0 +1,25 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Rival {
+  id String @id @unique
+  coinsUpdates CoinsUpdate[]
+}
+
+model CoinsUpdate {
+  id Int @id @default(autoincrement())
+  amount Int 
+  timestamp Int
+  rival Rival @relation(fields: [rivalId], references: [id])
+  rivalId String 
+}
+
