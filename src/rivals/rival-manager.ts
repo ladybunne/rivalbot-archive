@@ -1,6 +1,6 @@
 import { CoinsUpdate, PrismaClient, Rival } from "@prisma/client";
 import { Guild } from "discord.js";
-import { updateLeaderboard } from "../lifetime-coins/lifetime-coins-manager";
+import { updateLeaderboard } from "../coins/coins-manager";
 
 let prisma: PrismaClient;
 

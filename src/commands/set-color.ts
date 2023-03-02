@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, DataResolver } from "discord.js";
-import * as coinManager from "../lifetime-coins/lifetime-coins-manager"
+import * as coinManager from "../coins/coins-manager"
 
 const colorHexRegex = /#?([0-9A-Fa-f]{6})/
 

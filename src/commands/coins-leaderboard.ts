@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction } from "discord.js";
-import * as coinManager from "../lifetime-coins/lifetime-coins-manager";
+import * as coinManager from "../coins/coins-manager";
 import { channelCoinsLeaderboard } from '../configs/rivalbot-config.json'
 
 export const data = new SlashCommandBuilder()

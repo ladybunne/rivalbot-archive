@@ -5,7 +5,7 @@ import { Client, EmbedBuilder, Collection, GatewayIntentBits, TextChannel } from
 import { token, guildId } from './configs/rivalbot-config.json';
 import { Command } from './commands/commands';
 import * as rivalManager from "./rivals/rival-manager";
-import * as coinManager from "./lifetime-coins/lifetime-coins-manager";
+import * as coinManager from "./coins/coins-manager";
 import * as timerManager from "./timers/timer-manager";
 import { PrismaClient } from '@prisma/client';
 
