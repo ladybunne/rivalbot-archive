@@ -4,8 +4,10 @@ import path from 'node:path';
 import { Client, EmbedBuilder, Collection, GatewayIntentBits, TextChannel } from 'discord.js';
 import { token, guildId } from './configs/rivalbot-config.json';
 import { Command } from './commands/commands';
+import * as rivalManager from "./rivals/rival-manager";
 import * as coinManager from "./lifetime-coins/lifetime-coins-manager";
 import * as timerManager from "./timers/timer-manager";
+import { PrismaClient } from '@prisma/client';
 
 // Create a new client instance
 const client = new Client({ intents: [
@@ -39,8 +41,11 @@ client.once('ready', async () => {
 	const guild = await client.guilds.fetch(guildId);
 	await guild.members.fetch();
 
+	const prisma = new PrismaClient();
+
+	await rivalManager.start(guild, prisma);
+	await coinManager.start(guild, prisma);
 	await timerManager.start(guild);
-	await coinManager.start(guild);
 });
 
 client.on('interactionCreate', async interaction => {

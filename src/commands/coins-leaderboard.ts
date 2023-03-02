@@ -12,7 +12,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
 	const forcePost = interaction.options.getBoolean('force-post') ?? false;
 	if(forcePost) {
-		await interaction.reply({ embeds: [coinManager.embed(interaction.guild)], ephemeral: false });
+		await interaction.reply({ embeds: [await coinManager.embed(interaction.guild)], ephemeral: false });
 	}
 	else {
 		const response =  `Please see <#${channelCoinsLeaderboard}> for a live-updating version of the coins leaderboard!` + 
@@ -20,5 +20,5 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		await interaction.reply({ content: response, ephemeral: true });
 	}
 	
-	await coinManager.updateChannel(interaction.guild);
+	await coinManager.updateLeaderboard(interaction.guild);
 }

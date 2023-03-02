@@ -3,14 +3,14 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  await prisma.coinsUpdate.deleteMany();
-  await prisma.rival.deleteMany();
+  // await prisma.coinsUpdate.deleteMany();
+  // await prisma.rival.deleteMany();
   const newUser = await prisma.rival.create({
     data: {
       id: "1",
       coinsUpdates: {
         create: {
-          amount: 0,
+          coins: 0,
           timestamp: 0
         }
       }

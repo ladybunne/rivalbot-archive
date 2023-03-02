@@ -17,8 +17,8 @@ model Rival {
 
 model CoinsUpdate {
   id Int @id @default(autoincrement())
-  amount Int 
-  timestamp Int
+  coins BigInt
+  timestamp BigInt
   rival Rival @relation(fields: [rivalId], references: [id])
   rivalId String 
 }
