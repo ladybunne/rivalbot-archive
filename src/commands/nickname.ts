@@ -15,9 +15,10 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply({ ephemeral: false });
 
-	const forbiddenUsernames = ["Ladybunne", "RivalBot"];
+	const forbiddenUsernames = ["ladybunne", "rivalbot"];
 
-	if(forbiddenUsernames.includes(interaction.options.getUser("user").username)) {
+	if(forbiddenUsernames.includes(interaction.options.getUser("user").username.toLowerCase()) ||
+		forbiddenUsernames.includes(interaction.options.getString("nickname").toLowerCase())) {
 		interaction.editReply({ content: `Banned ${interaction.user} for nickname crimes... just kidding.` });
 		return;
 	}
