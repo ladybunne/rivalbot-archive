@@ -110,7 +110,7 @@ async function formattedLeaderboard(guild: Guild): Promise<string> {
 		rivalManager.getLatestCoinsUpdate(rival.id)
 	));
 
-	const updatesSorted = updates.sort((a, b) => Number(b.coins - a.coins));
+	const updatesSorted = [...updates].sort((a, b) => Number(b.coins - a.coins));
 
 	const lines = updatesSorted.map((update, i) => formatCoinsUpdateForLeaderboard(update, i, now, guild));
 
