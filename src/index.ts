@@ -5,7 +5,7 @@ import { Client, EmbedBuilder, Collection, GatewayIntentBits, TextChannel } from
 import { token, guildId } from './configs/rivalbot-config.json';
 import { Command } from './commands/commands';
 import * as rivalManager from "./rivals/rival-manager";
-import * as coinManager from "./coins/coins-manager";
+import * as coinsManager from "./coins/coins-manager";
 import * as timerManager from "./timers/timer-manager";
 import { PrismaClient } from '@prisma/client';
 
@@ -44,7 +44,7 @@ client.once('ready', async () => {
 	const prisma = new PrismaClient();
 
 	await rivalManager.start(guild, prisma);
-	await coinManager.start(guild, prisma);
+	await coinsManager.start(guild, prisma);
 	await timerManager.start(guild);
 });
 

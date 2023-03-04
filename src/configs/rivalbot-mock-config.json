@@ -10,5 +10,6 @@
 	"channelEventTimerId": "",
 	"channelMissionsTimerId": "",
 	
-	"channelCoinsLeaderboard": ""
+	"channelEventsFeedId": "",
+	"channelCoinsLeaderboardId": ""
 }

@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, DataResolver } from "discord.js";
-import * as coinManager from "../coins/coins-manager"
-import { channelCoinsLeaderboard } from '../configs/rivalbot-config.json'
+import * as coinsManager from "../coins/coins-manager"
+import { channelCoinsLeaderboardId } from '../configs/rivalbot-config.json'
 
 
 export const data = new SlashCommandBuilder()
@@ -19,11 +19,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	let response: string;
 
 	// Refactor this, it's garbage.
-	coinManager.update(interaction.user.id, interaction.options.getString("coins"), interaction.createdTimestamp, interaction.guild)
+	coinsManager.update(interaction.user.id, interaction.options.getString("coins"), interaction.createdTimestamp, interaction.guild)
 		.then(async (outcome) => {
 			if(outcome) {
 				response = `User <@${interaction.user.id}> submitted \`${interaction.options.getString("coins")}\` coins at ${timestampPrettyText}.` +
-					`\n\nSee the leaderboard channel here: <#${channelCoinsLeaderboard}>`;
+					`\n\nSee the leaderboard channel here: <#${channelCoinsLeaderboardId}>`;
 				await interaction.editReply({ content: response });
 			}
 			else {

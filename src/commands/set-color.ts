@@ -1,5 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, DataResolver } from "discord.js";
-import * as coinManager from "../coins/coins-manager"
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
 const colorHexRegex = /#?([0-9A-Fa-f]{6})/
 
@@ -34,6 +33,4 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	catch(e) {
 		await interaction.editReply({ content: `Couldn't change role color (error: ${e}).` });
 	}
-	
-	
 }

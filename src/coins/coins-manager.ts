@@ -1,19 +1,20 @@
-import { EmbedBuilder } from '@discordjs/builders';
 import { CoinsUpdate, PrismaClient } from '@prisma/client';
-import { Client, Guild, TextChannel } from 'discord.js';
+import { Client, Guild, MessageCreateOptions, TextChannel, EmbedBuilder } from 'discord.js';
 import fs from 'fs/promises';
 import schedule from 'node-schedule';
-import { channelCoinsLeaderboard } from '../configs/rivalbot-config.json'
+import { channelCoinsLeaderboardId, channelEventsFeedId } from '../configs/rivalbot-config.json'
 import * as rivalManager from "../rivals/rival-manager";
+import { COIN_PARSE_ERROR_NUMBER_INVALID, getActualCoins, getDisplayCoins } from './coins-helpers';
 
 let prisma: PrismaClient;
 
-const COIN_PARSE_ERROR_NUMBER_INVALID = -1;
+let rivalPositions: CoinsUpdate[];
 
 export async function start(guild: Guild, prismaClient: PrismaClient) {
 	prisma = prismaClient;
 	scheduleLeaderboardUpdates(guild);
 	await updateLeaderboard(guild);
+	rivalPositions = await getRivalPositions();
 }
 
 function scheduleLeaderboardUpdates(guild: Guild) {
@@ -22,6 +23,29 @@ function scheduleLeaderboardUpdates(guild: Guild) {
 	}
 	schedule.scheduleJob("*/5 * * * *", update);
 	console.log("Scheduled coins leaderboard to update every five minutes.");
+}
+
+// Updates the leaderboard embed.
+export async function updateLeaderboard(guild: Guild) {
+	const channel = guild.channels.cache.get(channelCoinsLeaderboardId) as TextChannel;
+	let embedMessageFetch = await channel.messages.fetch()
+		.then((messages) => messages.first());
+
+	if(!embedMessageFetch) {
+		channel.send({ embeds: [await leaderboardEmbed(guild)] });
+	}
+	else {
+		embedMessageFetch.edit({ embeds: [await leaderboardEmbed(guild)] });
+	}
+}
+
+async function getRivalPositions(): Promise<CoinsUpdate[]> {
+	// Rewrite this to be a single Prisma query, if I can figure out how.
+	let rivals = await prisma.rival.findMany();
+	const positions: CoinsUpdate[] = await Promise.all(rivals.map(async (rival) =>
+		rivalManager.getLatestCoinsUpdate(rival.id)
+	));
+	return positions.sort((a, b) => Number(b.coins - a.coins));
 }
 
 export async function update(id: string, coins: string, timestamp: number, guild: Guild): Promise<boolean> {
@@ -40,53 +64,9 @@ export async function update(id: string, coins: string, timestamp: number, guild
 		}
 	});
 
+	await checkLeaderboardPositionChanges(guild, id);
 	await updateLeaderboard(guild);
 	return true;
-}
-
-const parseCoins = /([0-9]+)\.?([0-9]{0,2})([KkMmBbTtQq]?)/
-
-function getActualCoins(coins: string): number {
-	const matches = parseCoins.exec(coins);
-	if(!matches) return COIN_PARSE_ERROR_NUMBER_INVALID;
-	const [ _, wholePart, decimalPart, unit ] = matches;
-	const wholePartParsed = parseInt(wholePart);
-	const decimalPartParsed = parseFloat(`0.${decimalPart}`);
-	const multiplier = getUnitMultiplier(unit);
-	const output = wholePartParsed * multiplier + decimalPartParsed * multiplier;
-	return output;
-}
-
-function getUnitMultiplier(unit: string): number {
-	switch(unit.toLowerCase()) {
-		case "k": 
-			return 1_000;
-		case "m":
-			return 1_000_000;
-		case "b":
-			return 1_000_000_000;
-		case "t":
-			return 1_000_000_000_000;
-		case "q":
-			return 1_000_000_000_000_000;
-		default:
-			return 1;
-	}
-}
-
-function getDisplayCoins(coins: number): string {
-	let displayValue = coins;
-	while(displayValue / 1_000 >= 1) displayValue /= 1000;
-	return `${displayValue.toFixed(2)}${getUnit(coins)}`;
-}
-
-function getUnit(coins: number): string {
-	if(coins >= 1_000_000_000_000_000) return "Q";
-	if(coins >= 1_000_000_000_000) return "T";
-	if(coins >= 1_000_000_000) return "B";
-	if(coins >= 1_000_000) return "M";
-	if(coins >= 1_000) return "K";
-	return "";
 }
 
 function getTimeSinceMostRecentEntry(timestamp: number, now: Date): string {
@@ -108,9 +88,7 @@ function getBadgeByPosition(position: number): string {
 		case 1:
 			return "🥈";
 		case 2:
-			return "🥉";		
-		// case 4:
-		// 	return "🙃";
+			return "🥉";
 		default:
 			return "";
 	}
@@ -136,12 +114,12 @@ async function formattedLeaderboard(guild: Guild): Promise<string> {
 
 	const lines = updatesSorted.map((update, i) => formatCoinsUpdateForLeaderboard(update, i, now, guild));
 
-	const output = lines.reduce((acc, curr, index) => `${acc}${curr}\n`, "");
+	const output = lines.reduce((acc, curr) => `${acc}${curr}\n`, "");
 	
 	return output ? output : "No entries.";
 }
 
-export async function embed(guild: Guild) {
+export async function leaderboardEmbed(guild: Guild) {
 	const embed = new EmbedBuilder()
 	.setColor(15844367)
 	.setTitle('Top Lifetime Coins')
@@ -152,16 +130,78 @@ export async function embed(guild: Guild) {
 	return embed;
 }
 
-// Updates the leaderboard embed.
-export async function updateLeaderboard(guild: Guild) {
-	const channel = guild.channels.cache.get(channelCoinsLeaderboard) as TextChannel;
-	let embedMessageFetch = await channel.messages.fetch()
-		.then((messages) => messages.first());
+async function checkLeaderboardPositionChanges(guild: Guild, id: string) {
+	let newPositions = await getRivalPositions();
+	let overtakees: Map<number, CoinsUpdate>;
 
-	if(!embedMessageFetch) {
-		channel.send({ embeds: [await embed(guild)] });
+	for(let position of newPositions) {
+		if(rivalPositions.indexOf(position) != newPositions.indexOf(position)) {
+			overtakees[newPositions.indexOf(position)] = position;
+		}
 	}
-	else {
-		embedMessageFetch.edit({ embeds: [await embed(guild)] });
+
+	if(overtakees.size) {
+		const overtaker = newPositions.find((position) => position.rivalId == id);
+		const oldCoins = rivalPositions.find((position) => position.rivalId == id).coins;
+		await sendOvertakeEmbeds(guild, overtaker, newPositions.indexOf(overtaker), Number(oldCoins), overtakees);
 	}
+
+	rivalPositions = newPositions;
 }
+
+async function overtakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition: number,
+	oldCoins: number, overtakees: Map<number, CoinsUpdate>): Promise<MessageCreateOptions> {
+
+	const overtakeText = `🟢 **${guild.members.cache.get(overtaker.rivalId).user.username}** claims ` +
+		`**${formatPosition(newPosition)}** place! (${getDisplayCoins(oldCoins)} -> ${getDisplayCoins(Number(overtaker.coins))} coins)`;
+
+	const lines = [ ...overtakees.entries() ].map(([position, update]) =>
+		`🔴 **${guild.members.cache.get(update.rivalId).user.username}** is demoted to ` + 
+			`**${formatPosition(position + 1)}** place. (${getDisplayCoins(Number(update.coins))} coins)`
+	);
+
+	const demoteText = lines.reduce((acc, curr) => `${acc}${curr}\n`, "");
+
+	const overtakeesIds = [ ...overtakees.values() ].map((update) => update.rivalId);
+	const pingsText = overtakeesIds.reduce((acc, curr) => 
+		`${acc}<@${curr}> `, `<#${channelCoinsLeaderboardId}> <-- <@${overtaker.rivalId}> `);
+
+	const overtakeEmbed = new EmbedBuilder()
+		.setDescription(`${overtakeText}`)
+		.setColor("Green");
+
+	const demoteEmbed = new EmbedBuilder()
+		.setDescription(`${demoteText.length ? demoteText : "this isn't working for some reason"}`)
+		.setColor("Red");
+
+	return { content: pingsText, embeds: [overtakeEmbed, demoteEmbed] };
+}
+
+// This should probably be in a "leaderboards helper" class or something. It's fine here now.
+function formatPosition(position: number): string {
+	if(position < 10 || Math.floor(position / 10) % 10 != 1) {
+		if(position % 10 == 1) return `${position}st`;
+		if(position % 10 == 2) return `${position}nd`;
+		if(position % 10 == 3) return `${position}rd`;
+	}
+	return `${position}th`;
+}
+
+async function sendOvertakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition: number,
+	oldCoins: number, overtakees: Map<number, CoinsUpdate>) {
+	const channel = guild.channels.cache.get(channelEventsFeedId) as TextChannel;
+	const embeds = await overtakeEmbeds(guild, overtaker, newPosition, oldCoins, overtakees);
+	channel.send(embeds);
+}
+
+// Test function; no longer used.
+/*
+export async function sendDummyOvertakeEmbeds(guild: Guild) {
+	const overtaker: CoinsUpdate = { id: 1, coins: BigInt(120), timestamp: BigInt(1), rivalId: "overtakerId" };
+
+	const overtakees: Map<number, CoinsUpdate> = new Map<number, CoinsUpdate>;
+	overtakees.set(121, { id: 2, coins: BigInt(100), timestamp: BigInt(1), rivalId: "overtakeeId" });
+
+	sendOvertakeEmbeds(guild, overtaker, 112, 80, overtakees);
+}
+*/
