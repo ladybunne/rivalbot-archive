@@ -132,11 +132,14 @@ export async function leaderboardEmbed(guild: Guild) {
 
 async function checkLeaderboardPositionChanges(guild: Guild, id: string) {
 	let newPositions = await getRivalPositions();
-	let overtakees: Map<number, CoinsUpdate>;
+	let overtakees: Map<number, CoinsUpdate> = new Map<number, CoinsUpdate>;
 
-	for(let position of newPositions) {
-		if(rivalPositions.indexOf(position) != newPositions.indexOf(position)) {
-			overtakees[newPositions.indexOf(position)] = position;
+	for(const position of newPositions) {
+		const newPosition = newPositions.indexOf(position);
+		const oldPosition = rivalPositions.findIndex((update) => update.id == position.id);
+		// console.log(`${newPosition} <- ${oldPosition}`);
+		if(newPosition != -1 && oldPosition != -1 && newPositions.indexOf(position) < rivalPositions.indexOf(position)) {
+			overtakees.set(newPositions.indexOf(position), position);
 		}
 	}
 
@@ -163,8 +166,8 @@ async function overtakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition:
 
 	const demoteText = lines.reduce((acc, curr) => `${acc}${curr}\n`, "");
 
-	let pingsText: string = "<#${channelCoinsLeaderboardId}> <-- <@${overtaker.rivalId}> ";
-	if(ping) {
+	let pingsText: string = `<#${channelCoinsLeaderboardId}> <-- <@${overtaker.rivalId}> `;
+	if(ping&& false) {
 		const overtakeesIds = [ ...overtakees.values() ].map((update) => update.rivalId);
 		pingsText += overtakeesIds.reduce((acc, curr) => 
 			`${acc}<@${curr}> `, ``);
