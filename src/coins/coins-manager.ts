@@ -142,15 +142,16 @@ async function checkLeaderboardPositionChanges(guild: Guild, id: string) {
 
 	if(overtakees.size) {
 		const overtaker = newPositions.find((position) => position.rivalId == id);
-		const oldCoins = rivalPositions.find((position) => position.rivalId == id).coins;
-		await sendOvertakeEmbeds(guild, overtaker, newPositions.indexOf(overtaker), Number(oldCoins), overtakees);
+		const notFirstSubmission = Boolean(rivalPositions.find((position) => position.rivalId == id));
+		const oldCoins = rivalPositions.find((position) => position.rivalId == id)?.coins ?? 0;
+		await sendOvertakeEmbeds(guild, overtaker, newPositions.indexOf(overtaker), Number(oldCoins), overtakees, notFirstSubmission);
 	}
 
 	rivalPositions = newPositions;
 }
 
 async function overtakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition: number,
-	oldCoins: number, overtakees: Map<number, CoinsUpdate>): Promise<MessageCreateOptions> {
+	oldCoins: number, overtakees: Map<number, CoinsUpdate>, ping: boolean): Promise<MessageCreateOptions> {
 
 	const overtakeText = `🟢 **${guild.members.cache.get(overtaker.rivalId).user.username}** claims ` +
 		`**${formatPosition(newPosition)}** place! (${getDisplayCoins(oldCoins)} -> ${getDisplayCoins(Number(overtaker.coins))} coins)`;
@@ -162,9 +163,12 @@ async function overtakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition:
 
 	const demoteText = lines.reduce((acc, curr) => `${acc}${curr}\n`, "");
 
-	const overtakeesIds = [ ...overtakees.values() ].map((update) => update.rivalId);
-	const pingsText = overtakeesIds.reduce((acc, curr) => 
-		`${acc}<@${curr}> `, `<#${channelCoinsLeaderboardId}> <-- <@${overtaker.rivalId}> `);
+	let pingsText: string = "<#${channelCoinsLeaderboardId}> <-- <@${overtaker.rivalId}> ";
+	if(ping) {
+		const overtakeesIds = [ ...overtakees.values() ].map((update) => update.rivalId);
+		pingsText += overtakeesIds.reduce((acc, curr) => 
+			`${acc}<@${curr}> `, ``);
+	}
 
 	const overtakeEmbed = new EmbedBuilder()
 		.setDescription(`${overtakeText}`)
@@ -188,9 +192,9 @@ function formatPosition(position: number): string {
 }
 
 async function sendOvertakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition: number,
-	oldCoins: number, overtakees: Map<number, CoinsUpdate>) {
+	oldCoins: number, overtakees: Map<number, CoinsUpdate>, ping: boolean) {
 	const channel = guild.channels.cache.get(channelEventsFeedId) as TextChannel;
-	const embeds = await overtakeEmbeds(guild, overtaker, newPosition, oldCoins, overtakees);
+	const embeds = await overtakeEmbeds(guild, overtaker, newPosition, oldCoins, overtakees, ping);
 	channel.send(embeds);
 }
 
