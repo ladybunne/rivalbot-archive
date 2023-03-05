@@ -119,7 +119,7 @@ async function formattedLeaderboard(guild: Guild): Promise<string> {
 	return output ? output : "No entries.";
 }
 
-export async function leaderboardEmbed(guild: Guild) {
+export async function leaderboardEmbed(guild: Guild): Promise<EmbedBuilder> {
 	const embed = new EmbedBuilder()
 	.setColor(15844367)
 	.setTitle('Top Lifetime Coins')

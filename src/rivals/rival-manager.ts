@@ -1,6 +1,7 @@
 import { CoinsUpdate, PrismaClient, Rival } from "@prisma/client";
-import { Guild } from "discord.js";
-import { updateLeaderboard } from "../coins/coins-manager";
+import { EmbedBuilder, Guild, GuildMember } from "discord.js";
+import * as coinsManager from "../coins/coins-manager";
+import { getDisplayCoins } from "../coins/coins-helpers";
 
 let prisma: PrismaClient;
 
@@ -36,4 +37,37 @@ export async function getLatestCoinsUpdate(id: string): Promise<CoinsUpdate> {
 			}
 		]
 	})
+}
+
+async function rivalCardDescription(member: GuildMember): Promise<string> {
+	// return `**Name**: ${member.user.username}\n` +
+	return `**Tagline**: _${"Formidable Rival"}_\n` +
+		`**Start Date**: ${"<t:1637391600:D>"}, ${"<t:1637391600:R>"}\n\n` +
+
+		`**Lifetime Coins**: ${getDisplayCoins(Number((await getLatestCoinsUpdate(member.id)).coins))}\n` +
+		`**Tournament PB:** ${"Champion 461"}\n` +
+		`**Tournament Strategy**: ${"WAWSIS"}\n\n` +
+
+		`**Workshop**: ${"2000/2000/2000"}\n` +
+		`**Ultimate Weapons**: ${"💀 ⌛ 💥 💰 🌀 / 🚀 🔦 ⚡ 🦠"}\n` +
+		`**Farming Strategy**: ${"Devo"}`;
+}
+
+export async function rivalCard(guild: Guild, id: string): Promise<EmbedBuilder | undefined> {
+	const member: GuildMember = guild.members.cache.get(id);
+	if(!member) {
+		return undefined;
+	}
+
+	const thumbnail = member.user.avatarURL();
+
+	const embed = new EmbedBuilder()
+	.setThumbnail(thumbnail.length ? thumbnail : member.user.defaultAvatarURL)
+	.setColor(member.roles.highest.color)
+	.setTitle(`Rival Card: ${member.user.username}`)
+	.setDescription(await rivalCardDescription(member))
+	.setTimestamp()
+	.setFooter({ text: 'This is a work in progress. Please expect bugs.' });
+
+	return embed;
 }
