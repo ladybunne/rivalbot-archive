@@ -9,7 +9,5 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply({ ephemeral: true });
 
-	[...Array(22).keys()].map((number) => console.log(`Day ${number + 1} => 🏅 ${timerManager.getMissionsTimerText(number, 5)}`));
-
 	await interaction.editReply({ content: `This command does nothing yet... or does it?` });
 }

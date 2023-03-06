@@ -1,10 +1,11 @@
-import { Guild, GuildChannel, GuildMember, GuildVoiceChannelResolvable, PermissionsBitField, VoiceChannel } from 'discord.js';
+import { Guild, VoiceChannel } from 'discord.js';
 import { channelTournamentTimerId, channelEventTimerId, channelMissionsTimerId } from '../configs/rivalbot-config.json';
 import schedule from 'node-schedule';
-import { handleError, timeUntil } from '../common';
+import { handleError } from '../common';
 
-const rolloverTime = new Date(0);
-const tomorrow = new Date(rolloverTime);
+// Setting this to "new Date(0)" introduces an hour of error.
+// I have no idea why, time code is just like that.
+const rolloverTime = new Date("2000-01-01");
 const TOURNAMENT_DAYS = [2, 5];
 
 const EVENT_START_DAY = new Date("2023-02-14");
@@ -26,26 +27,108 @@ export async function start(guild: Guild) {
 	schedule.scheduleJob("*/10 * * * *", update);
 	console.log("Scheduled timers to update every ten minutes.");
 	// await updateTimers(guild);
+
+	// test();
 }
 
-async function updateTimers(guild: Guild) {
+/*
+function test() {
 	const now = new Date(Date.now());
-	await updateTournamentTimer(guild, now);
-	await updateEventTimer(guild, now);
-	await updateMissionsTimer(guild, now);
-}
-
-async function updateTournamentTimer(guild: Guild, now: Date) {
+	
+	const tomorrow = new Date(rolloverTime);
 	tomorrow.setFullYear(now.getFullYear());
 	tomorrow.setMonth(now.getMonth());
 	tomorrow.setDate(now.getDate() + 1);
-	const hoursUntilTomorrow = Math.floor((tomorrow.getTime() - now.getTime()) / 1000 / 60 / 60);
-	// const minutesUntilTomorrow = Math.floor((tomorrow.getTime() - now.getTime()) / 1000 / 60 - hoursUntilTomorrow * 60);
-	if(tournamentHours != hoursUntilTomorrow) {
-		const timerText = `🏆 Live, ~${hoursUntilTomorrow}h left`;
+	const untilTomorrow = timeUntil(now, tomorrow);
+
+	const sinceLastEventStart = timeSinceLastEventStart(now);
+	const untilNextEventEnd = timeUntilNextEventEnd(now);
+	const untilNextEventStart = timeUntilNextEventStart(now);
+
+	console.log(`untilTomorrow: ${untilTomorrow.text}\n` +
+	`sinceLastEventStart: ${sinceLastEventStart.text}\n` +
+	`untilNextEventEnd: ${untilNextEventEnd.text}\n` +
+	`untilNextEventStart: ${untilNextEventStart.text}`);
+
+	console.log(rolloverTime.toString());
+	console.log(now.toString());
+	console.log(tomorrow.toString());
+}
+*/
+
+async function updateTimers(guild: Guild) {
+	const now = new Date(Date.now());
+	
+	const tomorrow = new Date(rolloverTime);
+	tomorrow.setFullYear(now.getFullYear());
+	tomorrow.setMonth(now.getMonth());
+	tomorrow.setDate(now.getDate() + 1);
+	const untilTomorrow = timeUntil(now, tomorrow);
+
+	const sinceLastEventStart = timeSinceLastEventStart(now);
+	const untilNextEventEnd = timeUntilNextEventEnd(now);
+	const untilNextEventStart = timeUntilNextEventStart(now);
+
+	await updateTournamentTimer(guild, untilTomorrow);
+	await updateEventTimer(guild, sinceLastEventStart, untilNextEventStart);
+	await updateMissionsTimer(guild, sinceLastEventStart, untilTomorrow, untilNextEventEnd);
+}
+
+type Duration = {
+	days: number,
+	hours: number,
+	text: string
+}
+
+// Add conditional hiding of days if days == 0. (Probably make this the default.)
+// Add optional force-to-days-granularity (hide hours) if days >= 1.
+function timeUntil(from: Date, until: Date): Duration {
+	const difference = until.getTime() - from.getTime();
+	const days = Math.floor(difference / 1000 / 60 / 60 / 24);
+	const hours = Math.floor(difference / 1000 / 60 / 60) % 24;
+	return { days: days, hours: hours, text: `${days}d ${hours}h`};
+}
+
+// We'll need a "timeUntilNextTournamentStart" and probably a "timeUntilNextTournamentEnd".
+
+function timeSinceLastEventStart(now: Date): Duration {
+	const currentEventDay = timeUntil(EVENT_START_DAY, now).days % EVENT_CYCLE_LENGTH;
+	const lastEventStart = new Date(rolloverTime);
+	lastEventStart.setFullYear(now.getFullYear());
+	lastEventStart.setMonth(now.getMonth());
+	lastEventStart.setDate(now.getDate() - currentEventDay);
+	return timeUntil(lastEventStart, now);
+}
+
+function timeUntilNextEventEnd(now: Date): Duration {
+	const currentEventDay = timeUntil(EVENT_START_DAY, now).days % EVENT_CYCLE_LENGTH;
+	const nextEventEnd = new Date(rolloverTime);
+	
+	let day = EVENT_ACTIVE_DAYS - currentEventDay;
+	if(day < 0) day += EVENT_CYCLE_LENGTH;
+
+	nextEventEnd.setFullYear(now.getFullYear());
+	nextEventEnd.setMonth(now.getMonth());
+	nextEventEnd.setDate(now.getDate() + day);
+	return timeUntil(now, nextEventEnd);
+}
+
+function timeUntilNextEventStart(now: Date): Duration {
+	const currentEventDay = timeUntil(EVENT_START_DAY, now).days % EVENT_CYCLE_LENGTH;
+	const nextEventStart = new Date(rolloverTime);
+	nextEventStart.setFullYear(now.getFullYear());
+	nextEventStart.setMonth(now.getMonth());
+	nextEventStart.setDate(now.getDate() + (EVENT_CYCLE_LENGTH - currentEventDay));
+	return timeUntil(now, nextEventStart);
+}
+
+async function updateTournamentTimer(guild: Guild, untilTomorrow: Duration) {
+	if(tournamentHours != untilTomorrow.hours) {
+		// rewrite this
+		const timerText = `🏆 Live, ~${untilTomorrow.hours}h left`;
 		await updateChannel(guild, channelTournamentTimerId, timerText)
 			.then(_ => {
-				tournamentHours = hoursUntilTomorrow;
+				tournamentHours = untilTomorrow.hours;
 				console.log("Updated tournament timer.")
 			})
 			.catch(handleError);	
@@ -54,53 +137,43 @@ async function updateTournamentTimer(guild: Guild, now: Date) {
 
 // Refactor this to take Date objects, to get per-hour granularity.
 // const daysSinceEventStart = Math.floor((now.getTime() - EVENT_START_DAY.getTime()) / 1000 / 60 / 60 / 24);
-function getEventTimerText(daysSinceEventStart: number, hours: number) {
-	const daysWrapped = daysSinceEventStart % EVENT_CYCLE_LENGTH;
-	if(daysWrapped < EVENT_ACTIVE_DAYS) {
-		return `Day ${daysWrapped + 1}/${EVENT_ACTIVE_DAYS}`;
+function getEventTimerText(sinceLastEventStart: Duration, untilNextEventStart: Duration) {
+	if(sinceLastEventStart.days < EVENT_ACTIVE_DAYS) {
+		return `Day ${sinceLastEventStart.days + 1}/${EVENT_ACTIVE_DAYS}`;
 	}
-	return `Next: ${EVENT_CYCLE_LENGTH - daysWrapped - 1}d ${hours}h`;
+	return `Next: ${untilNextEventStart.text}`;
 }
 
-async function updateEventTimer(guild: Guild, now: Date) {
-	const daysSinceEventStart = Math.floor((now.getTime() - EVENT_START_DAY.getTime()) / 1000 / 60 / 60 / 24);
-	const hoursUntilTomorrow = Math.floor((tomorrow.getTime() - now.getTime()) / 1000 / 60 / 60);
-	if(eventDay != daysSinceEventStart) {
-		const timerText = `⭐ ${getEventTimerText(daysSinceEventStart, hoursUntilTomorrow)}`;
+async function updateEventTimer(guild: Guild, sinceLastEventStart: Duration, untilNextEventStart: Duration) {
+	if(eventDay != sinceLastEventStart.days) {
+		const timerText = `⭐ ${getEventTimerText(sinceLastEventStart, untilNextEventStart)}`;
 		await updateChannel(guild, channelEventTimerId, timerText)
 			.then(_ => {
-				eventDay = daysSinceEventStart;
+				eventDay = sinceLastEventStart.days;
 				console.log("Updated event timer.")
 			})
 			.catch(handleError);
 	}
 }
 
-export function getMissionsTimerText(daysSinceEventStart: number, hours: number) {
-	const daysWrapped = daysSinceEventStart % EVENT_CYCLE_LENGTH;
-	if(daysWrapped < EVENT_ACTIVE_DAYS) {
-		let output = `${Math.min(MISSIONS_FIRST_DAY + MISSIONS_PER_DAY * daysWrapped, MISSIONS_TOTAL)}/${MISSIONS_TOTAL}, `;
-		if(daysWrapped < MISSIONS_NEW_MISSION_DAYS) {
-			return output + `next: ${hours}h`;
+export function getMissionsTimerText(sinceLastEventStart: Duration, untilTomorrow: Duration, untilNextEventEnd: Duration) {
+	if(sinceLastEventStart.days < EVENT_ACTIVE_DAYS) {
+		const currentMissions = Math.min(MISSIONS_FIRST_DAY + MISSIONS_PER_DAY * sinceLastEventStart.days, MISSIONS_TOTAL);
+		const missionsDisplay = `${currentMissions}/${MISSIONS_TOTAL}, `;
+		if(sinceLastEventStart.days < MISSIONS_NEW_MISSION_DAYS) {
+			return missionsDisplay + `next: ${untilTomorrow.text}`;
 		}
-		return output + `${hours}h left`;
+		return missionsDisplay + `${untilNextEventEnd.text} left`;
 	}
 	return `(hidden)`;
 }
 
-async function updateMissionsTimer(guild: Guild, now: Date) {
-	tomorrow.setFullYear(now.getFullYear());
-	tomorrow.setMonth(now.getMonth());
-	tomorrow.setDate(now.getDate() + 1);
-	const daysSinceEventStart = Math.floor((now.getTime() - EVENT_START_DAY.getTime()) / 1000 / 60 / 60 / 24);
-	const hoursUntilTomorrow = Math.floor((tomorrow.getTime() - now.getTime()) / 1000 / 60 / 60);
-	// const minutesUntilTomorrow = Math.floor((tomorrow.getTime() - now.getTime()) / 1000 / 60 - hoursUntilTomorrow * 60);
-	if(missionsHours != hoursUntilTomorrow) {
-		const timerText = `🏅 ${getMissionsTimerText(daysSinceEventStart, hoursUntilTomorrow)}`;
-		const daysWrapped = daysSinceEventStart % EVENT_CYCLE_LENGTH;
-		await updateChannel(guild, channelMissionsTimerId, timerText, daysWrapped < EVENT_ACTIVE_DAYS)
+async function updateMissionsTimer(guild: Guild, sinceLastEventStart: Duration, untilTomorrow: Duration, untilNextEventEnd: Duration) {
+	if(missionsHours != untilTomorrow.hours) {
+		const timerText = `🏅 ${getMissionsTimerText(sinceLastEventStart, untilTomorrow, untilNextEventEnd)}`;
+		await updateChannel(guild, channelMissionsTimerId, timerText, sinceLastEventStart.days < EVENT_ACTIVE_DAYS)
 			.then(_ => {
-				missionsHours = hoursUntilTomorrow;
+				missionsHours = untilTomorrow.hours;
 				console.log("Updated missions timer.");
 			})
 			.catch(handleError);	
