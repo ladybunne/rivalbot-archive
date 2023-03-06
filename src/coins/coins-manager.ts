@@ -137,7 +137,7 @@ async function checkLeaderboardPositionChanges(guild: Guild, id: string) {
 	for(const position of newPositions) {
 		const newPosition = newPositions.indexOf(position);
 		const oldPosition = rivalPositions.findIndex((update) => update.id == position.id);
-		// console.log(`${newPosition} <- ${oldPosition}`);
+		console.log(`${newPosition} <- ${oldPosition}`);
 		if(newPosition != -1 && oldPosition != -1 && newPositions.indexOf(position) < rivalPositions.indexOf(position)) {
 			overtakees.set(newPositions.indexOf(position), position);
 		}
