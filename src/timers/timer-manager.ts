@@ -33,7 +33,7 @@ export async function start(guild: Guild) {
 }
 
 function nextRollover(now: DateTime): DateTime {
-	return DateTime()
+	const rolloverToday = 
 }
 
 /*

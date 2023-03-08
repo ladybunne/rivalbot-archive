@@ -46,6 +46,20 @@ async function getRivalPositions(): Promise<CoinsUpdate[]> {
 	const positions: CoinsUpdate[] = await Promise.all(rivals.map(async (rival) =>
 		rivalManager.getLatestCoinsUpdate(rival.id)
 	));
+
+	// This should replace the above. Hopefully.
+	const positions2 = prisma.rival.findMany({
+		select: {
+			coinsUpdates: {
+				orderBy: [
+					{
+						timestamp: "desc"
+					}
+				],
+				take: 1
+			}
+		},
+	});
 	return positions.sort((a, b) => Number(b.coins - a.coins));
 }
 
