@@ -2,7 +2,7 @@ import { CoinsUpdate, PrismaClient } from '@prisma/client';
 import { Client, Guild, MessageCreateOptions, TextChannel, EmbedBuilder } from 'discord.js';
 import fs from 'fs/promises';
 import schedule from 'node-schedule';
-import { channelCoinsLeaderboardId, channelEventsFeedId } from '../configs/rivalbot-config.json'
+import { clientId, channelCoinsLeaderboardId, channelEventsFeedId } from '../configs/rivalbot-config.json'
 import * as rivalManager from "../rivals/rival-manager";
 import { COIN_PARSE_ERROR_NUMBER_INVALID, getActualCoins, getDisplayCoins } from './coins-helpers';
 
@@ -32,10 +32,11 @@ export async function updateLeaderboard(guild: Guild) {
 		.then((messages) => messages.first());
 
 	if(!embedMessageFetch) {
-		channel.send({ embeds: [await leaderboardEmbed(guild)] });
+		await channel.send({ embeds: [await leaderboardEmbed(guild)] });
 	}
-	else {
-		embedMessageFetch.edit({ embeds: [await leaderboardEmbed(guild)] });
+	// This check is to allow the dev version of RivalBot to ignore the production version's coin leaderboard message.
+	else if(embedMessageFetch.author.id == clientId){
+		await embedMessageFetch.edit({ embeds: [await leaderboardEmbed(guild)] });
 	}
 }
 

@@ -44,3 +44,4 @@ yarn.lock
 rivalbot-config*.json
 lifetime-coins.json
 *.db
+*.db-journal
