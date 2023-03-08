@@ -9,5 +9,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply({ ephemeral: true });
 
+	timerManager.test();
+
 	await interaction.editReply({ content: `This command does nothing yet... or does it?` });
 }

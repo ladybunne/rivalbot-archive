@@ -27,34 +27,39 @@ export async function start(guild: Guild) {
 	schedule.scheduleJob("*/10 * * * *", update);
 	console.log("Scheduled timers to update every ten minutes.");
 	// await updateTimers(guild);
-
-	// test();
 }
 
-/*
-function test() {
+export function test() {
 	const now = new Date(Date.now());
 	
 	const tomorrow = new Date(rolloverTime);
+
 	tomorrow.setFullYear(now.getFullYear());
 	tomorrow.setMonth(now.getMonth());
 	tomorrow.setDate(now.getDate() + 1);
 	const untilTomorrow = timeUntil(now, tomorrow);
 
+	const untilNextTournamentStart = timeUntilNextTournamentStart(now);
+	const untilNextTournamentEnd = timeUntilNextTournamentEnd(now);
 	const sinceLastEventStart = timeSinceLastEventStart(now);
 	const untilNextEventEnd = timeUntilNextEventEnd(now);
 	const untilNextEventStart = timeUntilNextEventStart(now);
 
-	console.log(`untilTomorrow: ${untilTomorrow.text}\n` +
-	`sinceLastEventStart: ${sinceLastEventStart.text}\n` +
-	`untilNextEventEnd: ${untilNextEventEnd.text}\n` +
-	`untilNextEventStart: ${untilNextEventStart.text}`);
+	console.log(
+		`untilTomorrow: ${untilTomorrow.text()}\n` +
+		`untilNextTournamentStart: ${untilNextTournamentStart.text()}\n` +
+		`untilNextTournamentEnd: ${untilNextTournamentEnd.text()}\n` +
+		`sinceLastEventStart: ${sinceLastEventStart.text()}\n` +
+		`untilNextEventEnd: ${untilNextEventEnd.text()}\n` +
+		`untilNextEventStart: ${untilNextEventStart.text()}`
+	);
 
-	console.log(rolloverTime.toString());
-	console.log(now.toString());
-	console.log(tomorrow.toString());
+	console.log(
+		`rolloverTime: ${rolloverTime.toString()}\n` +
+		`now: ${now.toString()}\n` +
+		`tomorrow: ${tomorrow.toString()}\n`
+	);
 }
-*/
 
 async function updateTimers(guild: Guild) {
 	const now = new Date(Date.now());
@@ -65,11 +70,13 @@ async function updateTimers(guild: Guild) {
 	tomorrow.setDate(now.getDate() + 1);
 	const untilTomorrow = timeUntil(now, tomorrow);
 
+	const untilNextTournamentStart = timeUntilNextTournamentStart(now);
+	const untilNextTournamentEnd = timeUntilNextTournamentEnd(now);
 	const sinceLastEventStart = timeSinceLastEventStart(now);
 	const untilNextEventEnd = timeUntilNextEventEnd(now);
 	const untilNextEventStart = timeUntilNextEventStart(now);
 
-	await updateTournamentTimer(guild, untilTomorrow);
+	await updateTournamentTimer(guild, untilNextTournamentStart, untilNextTournamentEnd);
 	await updateEventTimer(guild, sinceLastEventStart, untilNextEventStart);
 	await updateMissionsTimer(guild, sinceLastEventStart, untilTomorrow, untilNextEventEnd);
 }
@@ -77,7 +84,7 @@ async function updateTimers(guild: Guild) {
 type Duration = {
 	days: number,
 	hours: number,
-	text: string
+	text: () => string
 }
 
 // Add conditional hiding of days if days == 0. (Probably make this the default.)
@@ -86,10 +93,42 @@ function timeUntil(from: Date, until: Date): Duration {
 	const difference = until.getTime() - from.getTime();
 	const days = Math.floor(difference / 1000 / 60 / 60 / 24);
 	const hours = Math.floor(difference / 1000 / 60 / 60) % 24;
-	return { days: days, hours: hours, text: `${days}d ${hours}h`};
+	return { days: days, hours: hours, text: () => `${days}d ${hours}h`};
 }
 
 // We'll need a "timeUntilNextTournamentStart" and probably a "timeUntilNextTournamentEnd".
+
+function timeUntilNextTournamentStart(now: Date): Duration {
+	const dayOfWeek = now.getDay();
+
+	const daysUntilNextTournamentDay = TOURNAMENT_DAYS.reduce((acc, curr) => {
+		return dayOfWeek - curr < acc && dayOfWeek - curr >= 0 ? dayOfWeek - curr : acc 
+	}, Number.MAX_SAFE_INTEGER)
+
+	const nextTournamentStart = new Date(rolloverTime);
+
+	nextTournamentStart.setFullYear(now.getFullYear());
+	nextTournamentStart.setMonth(now.getMonth());
+	nextTournamentStart.setDate(now.getDate() + 1 + daysUntilNextTournamentDay);
+
+	return timeUntil(now, nextTournamentStart);
+}
+
+function timeUntilNextTournamentEnd(now: Date): Duration {
+	const dayOfWeek = now.getDay();
+
+	const daysUntilNextTournamentDay = TOURNAMENT_DAYS.reduce((acc, curr) => {
+		return dayOfWeek - curr + 1 < acc && dayOfWeek - curr + 1 >= 0 ? dayOfWeek - curr + 1 : acc 
+	}, Number.MAX_SAFE_INTEGER)
+
+	const nextTournamentEnd = new Date(rolloverTime);
+
+	nextTournamentEnd.setFullYear(now.getFullYear());
+	nextTournamentEnd.setMonth(now.getMonth());
+	nextTournamentEnd.setDate(now.getDate() + 1 + daysUntilNextTournamentDay);
+
+	return timeUntil(now, nextTournamentEnd);
+}
 
 function timeSinceLastEventStart(now: Date): Duration {
 	const currentEventDay = timeUntil(EVENT_START_DAY, now).days % EVENT_CYCLE_LENGTH;
@@ -122,26 +161,30 @@ function timeUntilNextEventStart(now: Date): Duration {
 	return timeUntil(now, nextEventStart);
 }
 
-async function updateTournamentTimer(guild: Guild, untilTomorrow: Duration) {
-	if(tournamentHours != untilTomorrow.hours) {
-		// rewrite this
-		const timerText = `🏆 Live, ~${untilTomorrow.hours}h left`;
+function getTournamentTimerText(untilNextTournamentStart: Duration, untilNextTournamentEnd: Duration) {
+	if(untilNextTournamentStart.days < untilNextTournamentEnd.days) {
+		return `Next: ${untilNextTournamentStart.text()}`;
+	}
+	return `Open, ${untilNextTournamentEnd.text()} left`;
+}
+
+async function updateTournamentTimer(guild: Guild, untilNextTournamentStart: Duration, untilNextTournamentEnd: Duration) {
+	if(tournamentHours != untilNextTournamentStart.hours) {
+		const timerText = `🏆 ${getTournamentTimerText(untilNextTournamentStart, untilNextTournamentEnd)}`;
 		await updateChannel(guild, channelTournamentTimerId, timerText)
 			.then(_ => {
-				tournamentHours = untilTomorrow.hours;
+				tournamentHours = untilNextTournamentStart.hours;
 				console.log("Updated tournament timer.")
 			})
 			.catch(handleError);	
 	}
 }
 
-// Refactor this to take Date objects, to get per-hour granularity.
-// const daysSinceEventStart = Math.floor((now.getTime() - EVENT_START_DAY.getTime()) / 1000 / 60 / 60 / 24);
 function getEventTimerText(sinceLastEventStart: Duration, untilNextEventStart: Duration) {
 	if(sinceLastEventStart.days < EVENT_ACTIVE_DAYS) {
 		return `Day ${sinceLastEventStart.days + 1}/${EVENT_ACTIVE_DAYS}`;
 	}
-	return `Next: ${untilNextEventStart.text}`;
+	return `Next: ${untilNextEventStart.text()}`;
 }
 
 async function updateEventTimer(guild: Guild, sinceLastEventStart: Duration, untilNextEventStart: Duration) {
@@ -161,9 +204,9 @@ export function getMissionsTimerText(sinceLastEventStart: Duration, untilTomorro
 		const currentMissions = Math.min(MISSIONS_FIRST_DAY + MISSIONS_PER_DAY * sinceLastEventStart.days, MISSIONS_TOTAL);
 		const missionsDisplay = `${currentMissions}/${MISSIONS_TOTAL}, `;
 		if(sinceLastEventStart.days < MISSIONS_NEW_MISSION_DAYS) {
-			return missionsDisplay + `next: ${untilTomorrow.text}`;
+			return missionsDisplay + `next: ${untilTomorrow.text()}`;
 		}
-		return missionsDisplay + `${untilNextEventEnd.text} left`;
+		return missionsDisplay + `${untilNextEventEnd.text()} left`;
 	}
 	return `(hidden)`;
 }
