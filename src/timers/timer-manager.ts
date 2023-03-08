@@ -2,6 +2,9 @@ import { Guild, VoiceChannel } from 'discord.js';
 import { channelTournamentTimerId, channelEventTimerId, channelMissionsTimerId } from '../configs/rivalbot-config.json';
 import schedule from 'node-schedule';
 import { handleError } from '../common';
+import { DateTime } from 'luxon';
+
+// Rewrite this whoooooooole thing with Luxon.
 
 // Setting this to "new Date(0)" introduces an hour of error.
 // I have no idea why, time code is just like that.
