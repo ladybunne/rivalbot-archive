@@ -59,10 +59,10 @@ export async function rivalCard(guild: Guild, id: string): Promise<EmbedBuilder 
 		return undefined;
 	}
 
-	const thumbnail = member.user.avatarURL();
+	const thumbnail = member.user.avatarURL() ?? member.user.defaultAvatarURL;
 
 	const embed = new EmbedBuilder()
-	.setThumbnail(thumbnail.length ? thumbnail : member.user.defaultAvatarURL)
+	.setThumbnail(thumbnail)
 	.setColor(member.roles.highest.color)
 	.setTitle(`Rival Card: ${member.user.username}`)
 	.setDescription(await rivalCardDescription(member))
