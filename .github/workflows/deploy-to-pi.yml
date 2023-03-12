@@ -1,8 +1,8 @@
 name: rivalbot-deploy
 on: [push]
 jobs:
-  deploy-to-pi:
-    name: Deploy to Pi
+  test-github-actions:
     runs-on: ubuntu-latest
     steps:
-      run: echo "This is a test."
+      - name: "Echo test."
+        run: echo "This is a test"
