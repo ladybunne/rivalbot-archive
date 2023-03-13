@@ -81,7 +81,7 @@ jobs:
         run: ssh pi 'cd RivalBot && ./down.sh'
       - name: Add 'Build' Files
         run: |
-          scp -r dist/* pi:RivalBot/build/dist
-          scp -r node_modules/* pi:RivalBot/build/node_modules
+          rsync -r dist/* pi:RivalBot/build/dist
+          rsync -r node_modules/* pi:RivalBot/build/node_modules
       # - name: Restart RivalBot
       #   run: ssh pi 'cd RivalBot && ./up.sh'
