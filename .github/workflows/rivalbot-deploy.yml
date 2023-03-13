@@ -26,47 +26,46 @@ jobs:
   # Not a "true" build, it simply does txc to get a js dist/, but... it's good enough for now.
   # Ideally replace this with a single-file executable.
   # Sadly, pkg is garbage and won't work for me, no matter how hard I try.
-  build:
+  # build:
+  #   runs-on: ubuntu-latest
+  #   needs: [deploy-tests]
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Setup Node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         cache: npm
+  #         cache-dependency-path: '**/package-lock.json'
+  #     - name: Setup Cache for Build
+  #       uses: actions/cache@v3
+  #       with:
+  #         key: build-${{ github.run_id }}
+  #         path: |
+  #           dist/
+  #           node_modules/
+  #     - name: Make a fake config
+  #       run: cp src/configs/rivalbot-mock-config.json src/configs/rivalbot-config.json
+  #     - name: Run `npm install`
+  #       run: npm install
+  #     - name: Build Project
+  #       run: npx tsc
+
+  deploy-to-pi:
     runs-on: ubuntu-latest
+    # needs: [build]
     needs: [deploy-tests]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: npm
-          cache-dependency-path: '**/package-lock.json'
-      - name: Setup Cache for Build
-        uses: actions/cache@v3
-        with:
-          key: build-${{ github.run_id }}
-          path: |
-            dist/
-            node_modules/
-      - name: Make a fake config
-        run: cp src/configs/rivalbot-mock-config.json src/configs/rivalbot-config.json
-      - name: Run `npm install`
-        run: npm install
-      - name: Run `npx prisma generate`
-        run: npx prisma generate
-      - name: Build Project
-        run: npx tsc
-
-  deploy-to-pi:
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Restore Build
-        uses: actions/cache@v3
-        with:
-          key: build-${{ github.run_id }}
-          path: |
-            dist/
-            node_modules/
+      # - name: Restore Build
+      #   uses: actions/cache@v3
+      #   with:
+      #     key: build-${{ github.run_id }}
+      #     path: |
+      #       dist/
+      #       node_modules/
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh/
@@ -76,7 +75,7 @@ jobs:
           Host pi
             HostName ${{ secrets.PI_IP_ADDRESS }}
             User ${{ secrets.PI_USERNAME }}
-          IdentityFile ~/.ssh/pi.key
+            IdentityFile ~/.ssh/pi.key
             StrictHostKeyChecking no
           END
       - name: Down RivalBot
