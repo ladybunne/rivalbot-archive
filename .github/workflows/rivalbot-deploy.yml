@@ -49,6 +49,8 @@ jobs:
         run: cp src/configs/rivalbot-mock-config.json src/configs/rivalbot-config.json
       - name: Run `npm install`
         run: npm install
+      - name: Run `npx prisma generate`
+        run: npx prisma generate
       - name: Build Project
         run: npx tsc
 
