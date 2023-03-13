@@ -44,6 +44,8 @@ jobs:
           key: build-${{ github.run_id }}
           path: |
             dist/
+      - name: Run `npm install`
+        run: npm install
       - name: Build Project
         run: npx tsc
 
