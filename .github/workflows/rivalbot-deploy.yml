@@ -7,7 +7,7 @@ on:
       # - 'main'
 
 jobs:
-  prebuild-tests:
+  deploy-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -16,41 +16,42 @@ jobs:
           node-version: 18
           cache: npm
           cache-dependency-path: '**/package-lock.json'
-      - name: Run npm ci
+      - name: Run `npm ci`
         run: npm ci
       - name: Run Tests
         run: npm test
 
-  build:
-    runs-on: ubuntu-latest
-    needs: [prebuild-tests]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: npm
-          cache-dependency-path: '**/package-lock.json'
-      - name: Setup Cache for Build
-        uses: actions/cache@v3
-        with:
-          key: build-${{ github.run_id }}
-          path: |
-            testfile.txt
-      - name: Build Project
-        run: echo "${{ github.run_id }}" > testfile.txt
+  # build:
+  #   runs-on: ubuntu-latest
+  #   needs: [deploy-tests]
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         cache: npm
+  #         cache-dependency-path: '**/package-lock.json'
+  #     - name: Setup Cache for Build
+  #       uses: actions/cache@v3
+  #       with:
+  #         key: build-${{ github.run_id }}
+  #         path: |
+  #           testfile.txt
+  #     - name: Build Project
+  #       run: echo "${{ github.run_id }}" > testfile.txt
 
   deploy-to-pi:
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [deploy-tests]
+    # needs: [build]
     steps:
       - uses: actions/checkout@v3
-      - name: Restore Build
-        uses: actions/cache@v3
-        with:
-          key: build-${{ github.run_id }}
-          path: |
-            testfile.txt
+      # - name: Restore Build
+      #   uses: actions/cache@v3
+      #   with:
+      #     key: build-${{ github.run_id }}
+      #     path: |
+      #       testfile.txt
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh/
@@ -63,6 +64,10 @@ jobs:
           IdentityFile ~/.ssh/pi.key
             StrictHostKeyChecking no
           END
-      - name: Add Test File
-      # run: ssh pi 'touch ~/testfile.txt'
-        run: scp testfile.txt pi:.
+      - name: Down RivalBot
+        run: ssh pi 'cd RivalBot && ./down.sh'
+      - name: Add 'Build' Files
+      # run: ssh pi 'touch ~/testfile.txt
+        run: scp -r dist/* pi:~/RivalBot/build
+      # - name: Restart RivalBot
+      #   run: ssh pi 'cd RivalBot && ./up.sh'
