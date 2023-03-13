@@ -6,10 +6,17 @@
     "start": "node ./dist/index.js",
     "dev-server": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"npm run start\"",
     "lint": "eslint . --ext .ts",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "buildWindows": "npx pkg -d --targets latest-windows-x64 .",
+    "buildLinux": "npx pkg -d --targets latest-linux-arm64 ."
   },
   "author": "Ladybunne",
   "license": "UNLICENSED",
+  "bin": "dist/index.js",
+  "pkg": {
+    "scripts": ["dist/**/*.js", "dist/commands/*.js"],
+    "outputPath": "builds"
+  },
   "devDependencies": {
     "@types/node-schedule": "^2.1.0",
     "@typescript-eslint/eslint-plugin": "^5.54.1",
