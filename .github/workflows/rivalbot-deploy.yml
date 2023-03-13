@@ -44,6 +44,7 @@ jobs:
           key: build-${{ github.run_id }}
           path: |
             dist/
+            node_modules/
       - name: Make a fake config
         run: cp src/configs/rivalbot-mock-config.json src/configs/rivalbot-config.json
       - name: Run `npm install`
@@ -63,6 +64,7 @@ jobs:
           key: build-${{ github.run_id }}
           path: |
             dist/
+            node_modules/
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh/
@@ -78,6 +80,8 @@ jobs:
       - name: Down RivalBot
         run: ssh pi 'cd RivalBot && ./down.sh'
       - name: Add 'Build' Files
-        run: scp -r dist/* pi:RivalBot/build
+        run: |
+          scp -r dist/* pi:RivalBot/build/dist
+          scp -r node_modules/* pi:RivalBot/build/node_modules
       # - name: Restart RivalBot
       #   run: ssh pi 'cd RivalBot && ./up.sh'
