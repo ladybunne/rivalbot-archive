@@ -7,7 +7,7 @@
 cat ~/RivalBot/bot.pid | xargs kill
 
 # Copy database out of build
-cp ~/RivalBot/build/prisma/prod.db ~/RivalBot/prisma/prod-temp.db
+cp ~/RivalBot/build/prisma/prod.db ~/RivalBot/prisma/prod-backup.db
 
 # Next, run wipe-build.sh if you want to nuke...
 # ...or, run up.sh if you just want to restart.
