@@ -80,6 +80,7 @@ jobs:
           END
       - name: Transfer Down/Up Scripts
         run: /
+          ls -la
           scp ./down.sh pi:~/RivalBot/down.sh
           scp ./up.sh pi:~/RivalBot/up.sh
       - name: Down RivalBot
