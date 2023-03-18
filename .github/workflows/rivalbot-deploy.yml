@@ -78,12 +78,16 @@ jobs:
             IdentityFile ~/.ssh/pi.key
             StrictHostKeyChecking no
           END
+      - name: Transfer Down/Up Scripts
+        run: /
+          rsync -r down.sh pi:~/RivalBot/down.sh
+          rsync -r up.sh pi:~/RivalBot/up.sh
       - name: Down RivalBot
-        run: ssh pi 'cd RivalBot && ./down.sh'
+        run: ssh pi '~/RivalBot/down.sh'
       - name: Add 'Build' Files
         run: |
           rsync -r * pi:RivalBot/build
         # rsync -r dist/* pi:RivalBot/build/dist
         # rsync -r node_modules/* pi:RivalBot/build/node_modules
-      # - name: Restart RivalBot
-      #   run: ssh pi 'cd RivalBot && ./up.sh'
+      - name: Restart RivalBot
+        run: ssh pi 'nohup ~/RivalBot/up.sh &'

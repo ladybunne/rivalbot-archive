@@ -1,6 +1,8 @@
 # RivalBot Restart Script - up.sh
 # Author: Ladybunne
 # Purpose: Arrange all config files correctly, then bring RivalBot back up!
+#
+# Intended to be run as: nohup up.sh &
 # ---
 
 # Move files from credentials/ to build/
@@ -15,7 +17,6 @@ cd ~/RivalBot/build
 npm install
 npx prisma generate
 npm run dev-server
-# Make that & at the end.
 
 # Somehow get the PID and put it in bot.pid
 echo $! > ~/RivalBot/bot.pid
