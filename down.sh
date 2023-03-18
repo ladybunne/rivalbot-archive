@@ -7,7 +7,7 @@
 cat ~/RivalBot/bot.pid | xargs kill
 
 # Wipe the build folder
-rm -rf ./build/*
+rm -rf ~/RivalBot/build/*
 
 # Nothing should be in ./build now.
 # At this point, transfer new files.
