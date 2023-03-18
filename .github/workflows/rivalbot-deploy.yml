@@ -2,9 +2,10 @@ name: rivalbot-deploy
 on:
   push:
     branches:
-      # Eventually, make this only fire on pushes to main.
-      - '*'
-      # - 'main'
+      # Make this only fire on pushes to main.
+      # Undo this if debugging is ever needed again (it will be).
+      # - '*'
+      - 'main'
 
 jobs:
   deploy-tests:
