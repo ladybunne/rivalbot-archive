@@ -13,7 +13,9 @@ cp ~/RivalBot/credentials/rivalbot-config-prod.json ~/RivalBot/build/src/configs
 cd ~/RivalBot/build
 npm install
 npx prisma generate
-npx prisma migrate dev
+
+# We may need to be a little more careful with this.
+# npx prisma migrate deploy
 
 # Replace this with some better logging at some point.
 nohup npm run dev-server > nohup.out 2> nohup.err < /dev/null &
