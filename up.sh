@@ -6,6 +6,7 @@
 # Move files from credentials/ to build/
 cp ~/RivalBot/credentials/.env ~/RivalBot/build/.env
 cp ~/RivalBot/credentials/rivalbot-config-prod.json ~/RivalBot/build/src/configs/rivalbot-config.json
+cp ~/RivalBot/prisma/prod-backup.db ~/RivalBot/build/prisma/prod.db
 
 # Move to build/ and run npm start
 # ...is what I'd like to say, but it's fucky.
@@ -13,7 +14,9 @@ cp ~/RivalBot/credentials/rivalbot-config-prod.json ~/RivalBot/build/src/configs
 cd ~/RivalBot/build
 npm install
 npx prisma generate
-npx prisma migrate dev
+
+# We may need to be a little more careful with this.
+# npx prisma migrate deploy
 
 # Replace this with some better logging at some point.
 nohup npm run dev-server > nohup.out 2> nohup.err < /dev/null &
