@@ -82,6 +82,8 @@ jobs:
         run: |
           scp ./down.sh pi:~/RivalBot/down.sh
           scp ./up.sh pi:~/RivalBot/up.sh
+          ssh pi 'chmod +x ~/RivalBot/down.sh'
+          ssh pi 'chmod +x ~/RivalBot/up.sh'
       - name: Down RivalBot
         run: ssh pi '~/RivalBot/down.sh'
       - name: Add 'Build' Files
