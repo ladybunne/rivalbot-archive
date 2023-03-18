@@ -8,7 +8,6 @@
 # Move files from credentials/ to build/
 cp ~/RivalBot/credentials/.env ~/RivalBot/build/.env
 cp ~/RivalBot/credentials/rivalbot-config-dev.json ~/RivalBot/build/src/configs/rivalbot-config.json
-cp ~/RivalBot/credentials/rivalbot-config-dev.json ~/RivalBot/build/dist/configs/rivalbot-config.json
 
 # Move to build/ and run npm start
 # ...is what I'd like to say, but it's fucky.
@@ -16,7 +15,7 @@ cp ~/RivalBot/credentials/rivalbot-config-dev.json ~/RivalBot/build/dist/configs
 cd ~/RivalBot/build
 npm install
 npx prisma generate
-npx prisma migrate -dev
+npx prisma migrate dev
 npm run dev-server &
 
 # Somehow get the PID and put it in bot.pid
