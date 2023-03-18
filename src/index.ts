@@ -61,11 +61,14 @@ client.on('interactionCreate', async interaction => {
 	try {
 		await command.execute(interaction);
 	} catch (error) {
-		console.error(error);
-		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+		console.log(error);
+		if(interaction.deferred) {
+			await interaction.editReply({ content: 'There was an error while executing this command!' });	
+		}
+		else {
+			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+		}
 	}
-
-	// console.log(interaction);
 });
 
 // Login to Discord with your client's token
