@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, DataResolver, EmbedBuilder } from "discord.js";
 
 // Change this to use IDs.
-const forbiddenUsernames = ["ladybunne", "rivalbot"];
+const forbiddenUsernames = ["ladybunne", "rivalbot", "adversaryautomaton"];
 
 export const data = new SlashCommandBuilder()
 	.setName('nickname')
@@ -19,6 +19,9 @@ export const data = new SlashCommandBuilder()
 // Defer -> edit is undesirable since you can't change ephemeral on an editReply.
 export async function execute(interaction: ChatInputCommandInteraction) {
 	// await interaction.deferReply({ ephemeral: false });
+
+	// Write some better handling for when nicknaming fails due to permissions.
+	// Thanks, Skye.
 
 	const targetUser = interaction.options.getUser("target");
 	const targetMember = await interaction.guild.members.fetch()

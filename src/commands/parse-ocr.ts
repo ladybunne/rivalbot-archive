@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
-import Tesseract from 'tesseract.js';
+// import Tesseract from 'tesseract.js';
 
 export const data = new SlashCommandBuilder()
 	.setName('parse-ocr')
@@ -10,6 +10,7 @@ export const data = new SlashCommandBuilder()
 			.setRequired(true));
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+	/*
 	await interaction.deferReply({ ephemeral: false });
 	const attachment = interaction.options.getAttachment("screenshot");
 	if(!attachment.contentType.includes("image")) {
@@ -32,4 +33,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	.setFooter({ text: 'This is a work in progress. Please expect bugs.' });
 
 	interaction.editReply({ content: `Thanks for the \`${attachment.contentType}\`, ${interaction.user}! Here is your content:`, embeds: [embed] });	
+	*/
+	await interaction.reply({ content: "This is disabled for now, sorry!", ephemeral: true });
 }

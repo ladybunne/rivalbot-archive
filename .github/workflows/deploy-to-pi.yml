@@ -1,8 +1,0 @@
-name: rivalbot-deploy
-on: [push]
-jobs:
-  test-github-actions:
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Echo test."
-        run: echo "This is a test"

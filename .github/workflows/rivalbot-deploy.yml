@@ -1,0 +1,97 @@
+name: rivalbot-deploy
+on:
+  push:
+    branches:
+      # Make this only fire on pushes to main.
+      # Undo this if debugging is ever needed again (it will be).
+      # - '*'
+      - 'main'
+
+jobs:
+  deploy-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: '**/package-lock.json'
+      - name: Run `npm ci`
+        run: npm ci
+      - name: Run Tests
+        run: npm test
+
+  # Not a "true" build, it simply does txc to get a js dist/, but... it's good enough for now.
+  # Ideally replace this with a single-file executable.
+  # Sadly, pkg is garbage and won't work for me, no matter how hard I try.
+  # build:
+  #   runs-on: ubuntu-latest
+  #   needs: [deploy-tests]
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Setup Node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         cache: npm
+  #         cache-dependency-path: '**/package-lock.json'
+  #     - name: Setup Cache for Build
+  #       uses: actions/cache@v3
+  #       with:
+  #         key: build-${{ github.run_id }}
+  #         path: |
+  #           dist/
+  #           node_modules/
+  #     - name: Make a fake config
+  #       run: cp src/configs/rivalbot-mock-config.json src/configs/rivalbot-config.json
+  #     - name: Run `npm install`
+  #       run: npm install
+  #     - name: Build Project
+  #       run: npx tsc
+
+  deploy-to-pi:
+    runs-on: ubuntu-latest
+    # needs: [build]
+    needs: [deploy-tests]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # - name: Restore Build
+      #   uses: actions/cache@v3
+      #   with:
+      #     key: build-${{ github.run_id }}
+      #     path: |
+      #       dist/
+      #       node_modules/
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.PI_SSH_PRIVATE_KEY }}" > ~/.ssh/pi.key
+          chmod 600 ~/.ssh/pi.key
+          cat >>~/.ssh/config <<END
+          Host pi
+            HostName ${{ secrets.PI_IP_ADDRESS }}
+            User ${{ secrets.PI_USERNAME }}
+            IdentityFile ~/.ssh/pi.key
+            StrictHostKeyChecking no
+          END
+      - name: Transfer Down/Up Scripts
+        run: |
+          scp ./down.sh pi:~/RivalBot/down.sh
+          scp ./up.sh pi:~/RivalBot/up.sh
+          ssh pi 'chmod +x ~/RivalBot/down.sh'
+          ssh pi 'chmod +x ~/RivalBot/up.sh'
+      - name: Down RivalBot
+        run: ssh pi '~/RivalBot/down.sh'
+      - name: Add 'Build' Files
+        run: |
+          rsync -r * pi:RivalBot/build
+        # rsync -r dist/* pi:RivalBot/build/dist
+        # rsync -r node_modules/* pi:RivalBot/build/node_modules
+      - name: Restart RivalBot
+        run: |
+          ssh pi 'cd ~/RivalBot && ~/RivalBot/up.sh'
