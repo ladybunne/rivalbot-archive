@@ -16,7 +16,7 @@ cd ~/RivalBot/build
 npm install
 npx prisma generate
 npx prisma migrate dev
-npm run dev-server &
+nohup npm run dev-server > nohup.out 2> nohup.err < /dev/null &
 
 # Somehow get the PID and put it in bot.pid
 echo $! > ~/RivalBot/bot.pid
