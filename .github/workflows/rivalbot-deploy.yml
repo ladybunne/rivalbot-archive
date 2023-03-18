@@ -79,8 +79,7 @@ jobs:
             StrictHostKeyChecking no
           END
       - name: Transfer Down/Up Scripts
-        run: /
-          ls -la
+        run: |
           scp ./down.sh pi:~/RivalBot/down.sh
           scp ./up.sh pi:~/RivalBot/up.sh
       - name: Down RivalBot
