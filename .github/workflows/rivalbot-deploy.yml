@@ -80,8 +80,8 @@ jobs:
           END
       - name: Transfer Down/Up Scripts
         run: /
-          rsync -r down.sh pi:~/RivalBot/down.sh
-          rsync -r up.sh pi:~/RivalBot/up.sh
+          rsync -r down.sh pi:~/RivalBot
+          rsync -r up.sh pi:~/RivalBot
       - name: Down RivalBot
         run: ssh pi '~/RivalBot/down.sh'
       - name: Add 'Build' Files
