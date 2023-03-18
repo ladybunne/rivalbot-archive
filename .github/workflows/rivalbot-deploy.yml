@@ -93,5 +93,4 @@ jobs:
         # rsync -r node_modules/* pi:RivalBot/build/node_modules
       - name: Restart RivalBot
         run: |
-          ssh pi 'nohup ~/RivalBot/up.sh &'
-          sleep 5
+          ssh pi 'cd ~/RivalBot && nohup ~/RivalBot/up.sh &'

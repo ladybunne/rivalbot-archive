@@ -16,7 +16,7 @@ cp ~/RivalBot/credentials/rivalbot-config-dev.json ~/RivalBot/build/dist/configs
 cd ~/RivalBot/build
 npm install
 npx prisma generate
-npm run dev-server
+npm run dev-server &
 
 # Somehow get the PID and put it in bot.pid
 echo $! > ~/RivalBot/bot.pid
