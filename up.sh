@@ -6,6 +6,7 @@
 # Move files from credentials/ to build/
 cp ~/RivalBot/credentials/.env ~/RivalBot/build/.env
 cp ~/RivalBot/credentials/rivalbot-config-prod.json ~/RivalBot/build/src/configs/rivalbot-config.json
+cp ~/RivalBot/prisma/prod-temp.db ~/RivalBot/build/prisma/prod.db
 
 # Move to build/ and run npm start
 # ...is what I'd like to say, but it's fucky.

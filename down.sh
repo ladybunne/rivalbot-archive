@@ -1,14 +1,13 @@
 # RivalBot Restart Script - down.sh
 # Author: Ladybunne
-# Purpose: Down RivalBot and wipe its working directory, to allow for new files to be deployed.
+# Purpose: Down RivalBot, to prepare for (optional) wiping and re-upping.
 # ---
 
 # Kill existing RivalBot process
 cat ~/RivalBot/bot.pid | xargs kill
 
-# Wipe the build folder
-rm -rf ~/RivalBot/build/*
+# Copy database out of build
+cp ~/RivalBot/build/prisma/prod.db ~/RivalBot/prisma/prod-temp.db
 
-# Nothing should be in ./build now.
-# At this point, transfer new files.
-# Then, run up.sh.
+# Next, run wipe-build.sh if you want to nuke...
+# ...or, run up.sh if you just want to restart.
