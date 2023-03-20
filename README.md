@@ -8,4 +8,5 @@ node .\dist\deploy-commands.js
 # Pi Stuff
 
 `ps -u pi` - shows all processes, to verify that the bot is up
-`cat ~/RivalBot/nohup.out` to check logs
+`cat ~/RivalBot/build/nohup.out` to check logs
+`tail -f <file>` to monitor a file's changes in real-time
