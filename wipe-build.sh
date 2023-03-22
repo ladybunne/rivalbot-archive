@@ -10,6 +10,9 @@ cp ~/RivalBot/build/prisma/prod.db ~/RivalBot/prisma/prod-backup.db
 # Wipe the build folder
 rm -rf ~/RivalBot/build/*
 
+# Make some folders
+mkdir -p ~/RivalBot/build/{src/configs,prisma}
+
 # Move files from credentials/ to build/
 cp ~/RivalBot/credentials/.env ~/RivalBot/build/.env
 cp ~/RivalBot/credentials/rivalbot-config-prod.json ~/RivalBot/build/src/configs/rivalbot-config.json
