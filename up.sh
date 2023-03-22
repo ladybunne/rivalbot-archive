@@ -1,12 +1,7 @@
 # RivalBot Restart Script - up.sh
 # Author: Ladybunne
-# Purpose: Arrange all config files correctly, then bring RivalBot back up!
+# Purpose: Bring RivalBot back up!
 # ---
-
-# Move files from credentials/ to build/
-cp ~/RivalBot/credentials/.env ~/RivalBot/build/.env
-cp ~/RivalBot/credentials/rivalbot-config-prod.json ~/RivalBot/build/src/configs/rivalbot-config.json
-cp ~/RivalBot/prisma/prod-backup.db ~/RivalBot/build/prisma/prod.db
 
 # Move to build/ and run npm start
 # ...is what I'd like to say, but it's fucky.
