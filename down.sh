@@ -4,7 +4,7 @@
 # ---
 
 # Kill existing RivalBot process
-cat ~/RivalBot/bot.pid | xargs kill
+cat ~/RivalBot/bot.pid | xargs kill || true
 
 # Next, run wipe-build.sh if you want to nuke...
 # ...or, run up.sh if you just want to restart.
