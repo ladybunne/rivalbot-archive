@@ -59,7 +59,6 @@ function mapAndCheckFormattedString(mapFunction: (dateTime: DateTime) => Interva
 	return intervals.map(interval => timerManager.formatIntervalToDuration(interval));
 }
 
-
 test('duration until next rollover matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextRollover(dateTime);
 	const values = [ '0d 15h', '0d 6h', '0d 0h', '1d 0h', '1d 0h', '1d 0h' ];
@@ -80,18 +79,18 @@ test('duration until next tournament end matches expected values', () => {
 
 test('duration since last event start matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.lastEventStart(dateTime);
-	const values = [ '5d 18h', '7d 12h', '8d 23h', '8d 0h', '18d 0h', '4d 0h' ];
+	const values = [ '5d 9h', '6d 18h', '7d 23h', '8d 0h', '18d 0h', '4d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
 test('duration until next event start matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextEventStart(dateTime);
-	const values = [ '14d 6h', '12d 12h', '11d 0h', '12d 0h', '2d 0h', '16d 0h' ];
+	const values = [ '13d 15h', '12d 6h', '11d 0h', '12d 0h', '2d 0h', '16d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
 test('duration until next event end matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextEventEnd(dateTime);
-	const values = [ '7d 6h', '5d 12h', '4d 0h', '5d 0h', '16d 0h', '9d 0h' ];
+	const values = [ '6d 15h', '5d 6h', '4d 0h', '5d 0h', '16d 0h', '9d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });

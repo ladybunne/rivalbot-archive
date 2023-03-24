@@ -11,7 +11,7 @@
     "buildWindows": "npx pkg -debug --targets latest-windows-x64 .",
     "buildWindows2": "npx pkg -debug --targets latest-windows-x64 --outputPath build \"dist/index.js\"",
     "buildLinux": "npx pkg --targets latest-linux-arm64 .",
-    "test": "jest --passWithNoTests"
+    "test": "jest"
   },
   "author": "Ladybunne",
   "license": "UNLICENSED",
