@@ -2,14 +2,12 @@ import { Guild, VoiceChannel } from 'discord.js';
 import { channelTournamentTimerId, channelEventTimerId, channelMissionsTimerId } from '../configs/rivalbot-config.json';
 import schedule from 'node-schedule';
 import { handleError } from '../common';
-import { DateTime, Duration, Interval } from 'luxon';
+import { DateTime, Duration, Interval, WeekdayNumbers } from 'luxon';
 
-// Rewrite this whoooooooole thing with Luxon.
-
-// Setting this to "new Date(0)" introduces an hour of error.
-// I have no idea why, time code is just like that.
 const ROLLOVER_TIME: DateTime = DateTime.fromObject({ hour: 0 }, { zone: "utc" });
-const TOURNAMENT_DAYS = [2, 5];
+
+// one-indexed because WeekdayNumbers are also one-indexed
+const TOURNAMENT_DAYS = [3, 6];
 
 const EVENT_START_DAY = DateTime.utc(2023, 2, 14);
 const EVENT_ACTIVE_DAYS = Duration.fromObject({ days: 14 });
@@ -34,45 +32,6 @@ export function start(guild: Guild) {
 	// await updateTimers(guild);
 }
 
-/*
-function oldTest() {
-	const now = new Date(Date.now());
-	
-	const tomorrow = new Date(rolloverTime);
-
-	tomorrow.setFullYear(now.getFullYear());
-	tomorrow.setMonth(now.getMonth());
-	tomorrow.setDate(now.getDate() + 1);
-	const untilTomorrow = timeUntil(now, tomorrow);
-
-	const untilNextTournamentStart = timeUntilNextTournamentStart(now);
-	const untilNextTournamentEnd = timeUntilNextTournamentEnd(now);
-	const sinceLastEventStart = timeSinceLastEventStart(now);
-	const untilNextEventEnd = timeUntilNextEventEnd(now);
-	const untilNextEventStart = timeUntilNextEventStart(now);
-
-	console.log(
-		`untilTomorrow: ${untilTomorrow.text()}\n` +
-		`untilNextTournamentStart: ${untilNextTournamentStart.text()}\n` +
-		`untilNextTournamentEnd: ${untilNextTournamentEnd.text()}\n` +
-		`sinceLastEventStart: ${sinceLastEventStart.text()}\n` +
-		`untilNextEventEnd: ${untilNextEventEnd.text()}\n` +
-		`untilNextEventStart: ${untilNextEventStart.text()}`
-	);
-
-	console.log(
-		`rolloverTime: ${rolloverTime.toString()}\n` +
-		`now: ${now.toString()}\n` +
-		`tomorrow: ${tomorrow.toString()}\n`
-	);
-}
-*/
-
-export function test() {
-	console.log(ROLLOVER_TIME.toISOTime(),
-		nextRollover(DateTime.now()).toDuration().toHuman({ unitDisplay: "short" }));
-}
-
 async function updateChannel(guild: Guild, channelId: string, name: string, visible = true) {
 	const channel: VoiceChannel = guild.channels.cache.get(channelId) as VoiceChannel;
 	await channel.setName(name)
@@ -81,7 +40,7 @@ async function updateChannel(guild: Guild, channelId: string, name: string, visi
 	await channel.permissionOverwrites.edit(channel.guild.roles.everyone, { ViewChannel: visible })
 }
 
-function formatIntervalToDuration(interval: Interval): string {
+export function formatIntervalToDuration(interval: Interval): string {
 	return interval.toDuration().toFormat(FORMAT_STRING, { floor: true });
 }
 
@@ -90,39 +49,76 @@ export function nextRollover(now: DateTime): Interval {
 	return Interval.fromDateTimes(now, (rolloverToday > now ? rolloverToday : rolloverToday.plus({ days: 1 })));
 }
 
-function currentMissionCount(sinceLastEventStart: Interval): number {
-	if(sinceLastEventStart.toDuration() > EVENT_ACTIVE_DAYS) return 0;
-	return Math.min(MISSIONS_FIRST_DAY + MISSIONS_PER_DAY * sinceLastEventStart.toDuration().days, MISSIONS_TOTAL);
+export function lastRollover(now: DateTime): Interval {
+	return Interval.fromDateTimes(nextRollover(now).end.minus({ days: 1 }), now);
 }
 
-// We'll need a "timeUntilNextTournamentStart" and probably a "timeUntilNextTournamentEnd".
+function currentMissionCount(sinceLastEventStart: Interval): number {
+	if(sinceLastEventStart.toDuration() > EVENT_ACTIVE_DAYS) return 0;
+	return Math.min(MISSIONS_FIRST_DAY + MISSIONS_PER_DAY * sinceLastEventStart.toDuration('days').days, MISSIONS_TOTAL);
+}
 
 /** Find the time until the next rollover on Wednesday or Saturday. */
 export function nextTournamentStart(now: DateTime): Interval {
-	return nextRollover(now);
+	const rollover = nextRollover(now);
+	
+	const dayDifference = TOURNAMENT_DAYS.reduce((acc, curr) => {
+		let difference = curr - rollover.end.weekday;
+		if(difference < 0) difference += 7;
+		return difference < acc ? difference : acc;
+	}, 7);	
+
+	return rollover.set({ end: rollover.end.plus({ days: dayDifference }) });
 }
 
 /** Find the time until the next rollover on Thursday or Sunday. */
 export function nextTournamentEnd(now: DateTime): Interval {
-	return nextRollover(now);
+	const rollover = nextRollover(now);
+	
+	const dayDifference = TOURNAMENT_DAYS.reduce((acc, curr) => {
+		let difference = curr + 1 - rollover.end.weekday;
+		if(difference < 0) difference += 7;
+		return difference < acc ? difference : acc;
+	}, 7);	
+
+	return rollover.set({ end: rollover.end.plus({ days: dayDifference }) });
 }
 
 /** Find the time since the last rollover on an event start date. */
 export function lastEventStart(now: DateTime): Interval {
-	return nextRollover(now);
-}
+	const rollover = nextRollover(now);
 
-/** Find the time until the next rollover on an event end date. */
-export function nextEventEnd(now: DateTime): Interval {
-	return nextRollover(now);
+	const intervalSinceEventStartDay = Interval.fromDateTimes(EVENT_START_DAY, now);
+
+	const dayDifference = intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days;
+
+	return Interval.fromDateTimes(rollover.end.minus({ days: dayDifference }), now);
 }
 
 /** Find the time until the next rollover on an event start date. */
 export function nextEventStart(now: DateTime): Interval {
-	return nextRollover(now);
+	const rollover = lastRollover(now);
+
+	const intervalSinceEventStartDay = Interval.fromDateTimes(EVENT_START_DAY, now);
+
+	const days = EVENT_CYCLE_LENGTH.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days;
+
+	return Interval.fromDateTimes(now, rollover.start.plus({ days: days }));
 }
 
-function getTournamentTimerText(untilNextTournamentStart: Interval, untilNextTournamentEnd: Interval) {
+/** Find the time until the next rollover on an event end date. */
+export function nextEventEnd(now: DateTime): Interval {
+	const rollover = lastRollover(now);
+
+	const intervalSinceEventStartDay = Interval.fromDateTimes(EVENT_START_DAY, now);
+
+	let days = EVENT_ACTIVE_DAYS.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days;
+	if(days < 0) days += EVENT_CYCLE_LENGTH.days;
+
+	return Interval.fromDateTimes(now, rollover.start.plus({ days: days }));
+}
+
+export function getTournamentTimerText(untilNextTournamentStart: Interval, untilNextTournamentEnd: Interval) {
 	if(untilNextTournamentStart < untilNextTournamentEnd) {
 		return `Next: ${formatIntervalToDuration(untilNextTournamentStart)}`;
 	}
@@ -141,19 +137,19 @@ async function updateTournamentTimer(guild: Guild, untilNextTournamentStart: Int
 	}
 }
 
-function getEventTimerText(sinceLastEventStart: Interval, untilNextEventStart: Interval) {
+export function getEventTimerText(sinceLastEventStart: Interval, untilNextEventStart: Interval) {
 	if(sinceLastEventStart.toDuration() < EVENT_ACTIVE_DAYS) {
-		return `Day ${sinceLastEventStart.toDuration().days + 1}/${EVENT_ACTIVE_DAYS.days}`;
+		return `Day ${sinceLastEventStart.toDuration('days').days + 1}/${EVENT_ACTIVE_DAYS.days}`;
 	}
 	return `Next: ${formatIntervalToDuration(untilNextEventStart)}`;
 }
 
 async function updateEventTimer(guild: Guild, sinceLastEventStart: Interval, untilNextEventStart: Interval) {
-	if(eventDay != sinceLastEventStart.toDuration().days) {
+	if(eventDay != sinceLastEventStart.toDuration('days').days) {
 		const timerText = `⭐ ${getEventTimerText(sinceLastEventStart, untilNextEventStart)}`;
 		await updateChannel(guild, channelEventTimerId, timerText)
 			.then(() => {
-				eventDay = sinceLastEventStart.toDuration().days;
+				eventDay = sinceLastEventStart.toDuration('days').days;
 				console.log("Updated event timer.")
 			})
 			.catch(handleError);
