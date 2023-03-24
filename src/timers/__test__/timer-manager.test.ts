@@ -61,19 +61,19 @@ function mapAndCheckFormattedString(mapFunction: (dateTime: DateTime) => Interva
 
 test('duration until next rollover matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextRollover(dateTime);
-	const values = [ '0d 15h', '0d 6h', '0d 0h', '1d 0h', '1d 0h', '1d 0h' ];
+	const values = [ '15h', '6h', '0h', '1d 0h', '1d 0h', '1d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
 test('duration until next tournament start matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextTournamentStart(dateTime);
-	const values = [ '1d 15h', '0d 6h', '2d 0h', '2d 0h', '3d 0h', '3d 0h' ];
+	const values = [ '1d 15h', '6h', '2d 0h', '2d 0h', '3d 0h', '3d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
 test('duration until next tournament end matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextTournamentEnd(dateTime);
-	const values = [ '2d 15h', '1d 6h', '0d 0h', '3d 0h', '4d 0h', '4d 0h' ];
+	const values = [ '2d 15h', '1d 6h', '0h', '3d 0h', '4d 0h', '4d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
@@ -85,12 +85,12 @@ test('duration since last event start matches expected values', () => {
 
 test('duration until next event start matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextEventStart(dateTime);
-	const values = [ '13d 15h', '12d 6h', '11d 0h', '12d 0h', '2d 0h', '16d 0h' ];
+	const values = [ '14d 15h', '13d 6h', '12d 0h', '13d 0h', '3d 0h', '17d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
 test('duration until next event end matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextEventEnd(dateTime);
-	const values = [ '6d 15h', '5d 6h', '4d 0h', '5d 0h', '16d 0h', '9d 0h' ];
+	const values = [ '7d 15h', '6d 6h', '5d 0h', '6d 0h', '17d 0h', '10d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
