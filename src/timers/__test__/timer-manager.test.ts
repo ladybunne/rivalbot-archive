@@ -85,12 +85,12 @@ test('duration since last event start matches expected values', () => {
 
 test('duration until next event start matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextEventStart(dateTime);
-	const values = [ '13d 15h', '12d 6h', '11d 0h', '12d 0h', '2d 0h', '16d 0h' ];
+	const values = [ '14d 15h', '13d 6h', '12d 0h', '13d 0h', '3d 0h', '17d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
 test('duration until next event end matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextEventEnd(dateTime);
-	const values = [ '6d 15h', '5d 6h', '4d 0h', '5d 0h', '16d 0h', '9d 0h' ];
+	const values = [ '7d 15h', '6d 6h', '5d 0h', '6d 0h', '17d 0h', '10d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
