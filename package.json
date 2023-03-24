@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node ./dist/index.js",
     "dev-server": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"npm run start\"",
+    "dev": "tsc-watch --noClear -p ./tsconfig.json",
     "lint": "eslint . --ext .ts",
     "buildWindows": "npx pkg -debug --targets latest-windows-x64 .",
     "buildWindows2": "npx pkg -debug --targets latest-windows-x64 --outputPath build \"dist/index.js\"",
@@ -16,9 +17,7 @@
   "license": "UNLICENSED",
   "bin": "dist/index.js",
   "pkg": {
-    "scripts": [
-      
-    ],
+    "scripts": [],
     "assets": [
       "dist/**/*.js",
       "dist/commands/*.js",
@@ -27,6 +26,8 @@
     "outputPath": "build"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/luxon": "^3.2.0",
     "@types/node-schedule": "^2.1.0",
     "@typescript-eslint/eslint-plugin": "^5.54.1",
     "@typescript-eslint/parser": "^5.54.1",
@@ -36,12 +37,14 @@
     "pkg": "^5.8.1",
     "pkg-fetch": "^3.4.2",
     "prisma": "^4.11.0",
+    "ts-jest": "^29.0.5",
     "tsc-watch": "^6.0.0",
     "typescript": "^4.8.4"
   },
   "dependencies": {
     "@prisma/client": "^4.11.0",
     "discord.js": "^14.6.0",
+    "luxon": "^3.3.0",
     "node-schedule": "^2.1.1"
   }
 }

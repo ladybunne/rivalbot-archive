@@ -45,7 +45,7 @@ client.once('ready', async () => {
 
 	await rivalManager.start(guild, prisma);
 	await coinsManager.start(guild, prisma);
-	await timerManager.start(guild);
+	timerManager.start(guild);
 });
 
 client.on('interactionCreate', async interaction => {
