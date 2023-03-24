@@ -132,11 +132,11 @@ export function getTournamentTimerText(untilNextTournamentStart: Interval, until
 }
 
 async function updateTournamentTimer(guild: Guild, untilNextTournamentStart: Interval, untilNextTournamentEnd: Interval) {
-	if(tournamentHours != untilNextTournamentStart.toDuration().hours) {
+	if(tournamentHours != untilNextTournamentStart.toDuration('hours').hours) {
 		const timerText = `🏆 ${getTournamentTimerText(untilNextTournamentStart, untilNextTournamentEnd)}`;
 		await updateChannel(guild, channelTournamentTimerId, timerText)
-			.then(_ => {
-				tournamentHours = untilNextTournamentStart.toDuration().hours;
+			.then(() => {
+				tournamentHours = untilNextTournamentStart.toDuration('hours').hours;
 				console.log("Updated tournament timer.")
 			})
 			.catch(handleError);	
@@ -175,11 +175,11 @@ export function getMissionsTimerText(sinceLastEventStart: Interval, untilTomorro
 }
 
 async function updateMissionsTimer(guild: Guild, sinceLastEventStart: Interval, untilTomorrow: Interval, untilNextEventEnd: Interval) {
-	if(missionsHours != untilTomorrow.toDuration().hours) {
+	if(missionsHours != untilTomorrow.toDuration('hours').hours) {
 		const timerText = `🏅 ${getMissionsTimerText(sinceLastEventStart, untilTomorrow, untilNextEventEnd)}`;
 		await updateChannel(guild, channelMissionsTimerId, timerText, sinceLastEventStart.toDuration() < EVENT_ACTIVE_DAYS)
 			.then(() => {
-				missionsHours = untilTomorrow.toDuration().hours;
+				missionsHours = untilTomorrow.toDuration('hours').hours;
 				console.log("Updated missions timer.");
 			})
 			.catch(handleError);	
