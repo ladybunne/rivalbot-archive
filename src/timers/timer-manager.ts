@@ -41,7 +41,7 @@ async function updateChannel(guild: Guild, channelId: string, name: string, visi
 }
 
 export function formatIntervalToDuration(interval: Interval): string {
-	return interval.toDuration().toFormat(FORMAT_STRING, { floor: true });
+	return interval.toDuration(['days', 'hours']).toFormat(FORMAT_STRING, { floor: true });
 }
 
 export function nextRollover(now: DateTime): Interval {
@@ -90,7 +90,7 @@ export function lastEventStart(now: DateTime): Interval {
 
 	const intervalSinceEventStartDay = Interval.fromDateTimes(EVENT_START_DAY, now);
 
-	const dayDifference = intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days;
+	const dayDifference = Math.floor(intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days);
 
 	return Interval.fromDateTimes(rollover.end.minus({ days: dayDifference }), now);
 }
@@ -101,7 +101,7 @@ export function nextEventStart(now: DateTime): Interval {
 
 	const intervalSinceEventStartDay = Interval.fromDateTimes(EVENT_START_DAY, now);
 
-	const days = EVENT_CYCLE_LENGTH.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days;
+	const days = Math.floor(EVENT_CYCLE_LENGTH.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days);
 
 	return Interval.fromDateTimes(now, rollover.start.plus({ days: days }));
 }
@@ -112,7 +112,7 @@ export function nextEventEnd(now: DateTime): Interval {
 
 	const intervalSinceEventStartDay = Interval.fromDateTimes(EVENT_START_DAY, now);
 
-	let days = EVENT_ACTIVE_DAYS.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days;
+	let days = Math.floor(EVENT_ACTIVE_DAYS.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days);
 	if(days < 0) days += EVENT_CYCLE_LENGTH.days;
 
 	return Interval.fromDateTimes(now, rollover.start.plus({ days: days }));
