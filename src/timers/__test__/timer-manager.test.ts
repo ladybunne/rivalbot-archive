@@ -61,19 +61,19 @@ function mapAndCheckFormattedString(mapFunction: (dateTime: DateTime) => Interva
 
 test('duration until next rollover matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextRollover(dateTime);
-	const values = [ '0d 15h', '0d 6h', '0d 0h', '1d 0h', '1d 0h', '1d 0h' ];
+	const values = [ '15h', '6h', '0h', '1d 0h', '1d 0h', '1d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
 test('duration until next tournament start matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextTournamentStart(dateTime);
-	const values = [ '1d 15h', '0d 6h', '2d 0h', '2d 0h', '3d 0h', '3d 0h' ];
+	const values = [ '1d 15h', '6h', '2d 0h', '2d 0h', '3d 0h', '3d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
 test('duration until next tournament end matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextTournamentEnd(dateTime);
-	const values = [ '2d 15h', '1d 6h', '0d 0h', '3d 0h', '4d 0h', '4d 0h' ];
+	const values = [ '2d 15h', '1d 6h', '0h', '3d 0h', '4d 0h', '4d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 

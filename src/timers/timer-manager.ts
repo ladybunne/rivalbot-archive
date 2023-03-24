@@ -20,6 +20,7 @@ const MISSIONS_NEW_MISSION_DAYS = Duration.fromObject({ days: 7 });
 const MISSIONS_TOTAL = MISSIONS_FIRST_DAY + MISSIONS_PER_DAY * (MISSIONS_NEW_MISSION_DAYS.days);
 
 const FORMAT_STRING = "d'd' h'h";
+const FORMAT_STRING_LESS_THAN_DAY = "h'h"
 
 let tournamentHours = -1;
 let eventDay = -1;
@@ -41,6 +42,9 @@ async function updateChannel(guild: Guild, channelId: string, name: string, visi
 }
 
 export function formatIntervalToDuration(interval: Interval): string {
+	if(interval.toDuration('days').days < 1) {
+		return interval.toDuration('hours').toFormat(FORMAT_STRING_LESS_THAN_DAY, { floor: true }); 
+	}
 	return interval.toDuration(['days', 'hours']).toFormat(FORMAT_STRING, { floor: true });
 }
 
@@ -97,25 +101,27 @@ export function lastEventStart(now: DateTime): Interval {
 
 /** Find the time until the next rollover on an event start date. */
 export function nextEventStart(now: DateTime): Interval {
-	const rollover = lastRollover(now);
+	const rollover = nextRollover(now);
 
 	const intervalSinceEventStartDay = Interval.fromDateTimes(EVENT_START_DAY, now);
 
-	const days = Math.floor(EVENT_CYCLE_LENGTH.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days);
+	const dayDifference = Math.floor(EVENT_CYCLE_LENGTH.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days);
 
-	return Interval.fromDateTimes(now, rollover.start.plus({ days: days }));
+	return rollover.set({ end: rollover.end.plus({ days: dayDifference }) });
+	// return Interval.fromDateTimes(now, rollover.start.plus({ days: days }));
 }
 
 /** Find the time until the next rollover on an event end date. */
 export function nextEventEnd(now: DateTime): Interval {
-	const rollover = lastRollover(now);
+	const rollover = nextRollover(now);
 
 	const intervalSinceEventStartDay = Interval.fromDateTimes(EVENT_START_DAY, now);
 
-	let days = Math.floor(EVENT_ACTIVE_DAYS.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days);
-	if(days < 0) days += EVENT_CYCLE_LENGTH.days;
+	let dayDifference = Math.floor(EVENT_ACTIVE_DAYS.days - intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days);
+	if(dayDifference < 0) dayDifference += EVENT_CYCLE_LENGTH.days;
 
-	return Interval.fromDateTimes(now, rollover.start.plus({ days: days }));
+	return rollover.set({ end: rollover.end.plus({ days: dayDifference }) });
+	// return Interval.fromDateTimes(now, rollover.start.plus({ days: dayDifference }));
 }
 
 export function getTournamentTimerText(untilNextTournamentStart: Interval, untilNextTournamentEnd: Interval) {
