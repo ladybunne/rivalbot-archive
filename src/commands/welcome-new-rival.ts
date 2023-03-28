@@ -24,8 +24,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		.setColor("White")
 		.setTitle("💻 Commands")
 		.setDescription(`RivalBot has many commands available. Try out the following when you have time:\n\n` +
-			`<${commandLifetimeCoinsId} to submit your lifetime coin earnings to <#${channelCoinsLeaderboardId}>>\n` +
-			`<${commandSetColorId} to change the colour of your name>\n\n` +
+			`<${commandLifetimeCoinsId}> to submit your lifetime coin earnings to <#${channelCoinsLeaderboardId}>>\n` +
+			`<${commandSetColorId}> to change the colour of your name>\n\n` +
 			`Type '/' to see a list of commands! Keep an eye out for commands that others use.`);
 
 	const embedChannels = new EmbedBuilder()
