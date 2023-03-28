@@ -3,13 +3,21 @@
 	"clientId": "",
 	"guildId": "",
 
-	"channelGeneralId": "",
-	"channelBotTestingId": "",
+	"userBotAuthorId": "",
+
+	"channelCoinsLeaderboardId": "",
+	"channelEventsFeedId": "",
 
 	"channelTournamentTimerId": "",
 	"channelEventTimerId": "",
 	"channelMissionsTimerId": "",
-	
-	"channelEventsFeedId": "",
-	"channelCoinsLeaderboardId": ""
+
+	"channelRoleAssignId": "",
+	"channelTowerChatId": "",
+	"channelFutureRivalsId": "",
+	"channelResourcesId": "",
+	"channelHelpRoom": "",
+
+	"commandLifetimeCoinsId": "",
+	"commandSetColorId": ""
 }
