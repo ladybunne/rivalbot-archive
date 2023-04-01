@@ -46,7 +46,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				outcome = `Failure. Nickname not changed.\n\n`+
 					`**Reason:** ${error}`;
 				outcomeSuccess = false;
-				console.log(error);
+				console.error(error);
 			});
 	}
 
