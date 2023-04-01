@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, DataResolver } from "discord.js";
+import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, DataResolver, EmbedBuilder } from "discord.js";
 import * as coinsManager from "../coins/coins-manager"
 import { channelCoinsLeaderboardId } from '../configs/rivalbot-config.json'
 
@@ -14,22 +14,40 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply({ ephemeral: true });
 
-	const timestamp = interaction.createdTimestamp;
-	const timestampPrettyText = new Date(timestamp).toString();
-	let response: string;
+	const coins = interaction.options.getString("coins");
 
-	// Refactor this, it's garbage.
-	coinsManager.update(interaction.user.id, interaction.options.getString("coins"), interaction.createdTimestamp, interaction.guild)
-		.then(async (outcome) => {
-			if(outcome) {
-				response = `User <@${interaction.user.id}> submitted \`${interaction.options.getString("coins")}\` coins at ${timestampPrettyText}.` +
-					`\n\nSee the leaderboard channel here: <#${channelCoinsLeaderboardId}>`;
-				await interaction.editReply({ content: response });
+	let outcome: string;
+	let outcomeSuccess = true;
+
+	await coinsManager.update(interaction.user.id, coins, interaction.createdTimestamp, interaction.guild)
+		.then((updateOutcome) => {
+			if(updateOutcome) {
+				outcome = `Success! Lifetime coins updated.\n` +
+					`See the leaderboard channel here: <#${channelCoinsLeaderboardId}>`
 			}
 			else {
-				response = `User <@${interaction.user.id}> failed to submit \`${interaction.options.getString("coins")}\` coins at ${timestampPrettyText}.` +
-					`\n\nCheck the format of your submission and try again.`;
-				await interaction.editReply({ content: response });
-			}
+				outcome = `Failure. Lifetime coins not updated.\n\n` +
+					`**Reason**: The coins manager refused the data. Please double-check your data is correct and try again.`;
+				outcomeSuccess = false;
+			}	
+		})
+		.catch((error) => {
+			outcome = `Failure. Lifetime coins not updated.\n\n` +
+				`**Reason**: ${error}`;
+			outcomeSuccess = false;
+			console.error(error);
 		});
+
+	const description = `**User**: ${interaction.user.username} / ${interaction.user}\n` +
+		`**Coins**: ${coins}\n\n` +
+		`**Outcome**: ${outcome}`;
+
+	const embed = new EmbedBuilder()
+		.setColor(outcomeSuccess ? "Green" : "Red")
+		.setTitle('Lifetime Coins Update')
+		.setDescription(description)
+		.setTimestamp()
+		.setFooter({ text: 'This is a work in progress. Please expect bugs.' });
+
+	await interaction.editReply({ embeds: [embed] });
 }

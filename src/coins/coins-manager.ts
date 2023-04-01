@@ -65,8 +65,12 @@ async function getRivalPositions(): Promise<CoinsUpdate[]> {
 
 export async function update(id: string, coins: string, timestamp: number, guild: Guild): Promise<boolean> {
 	// Validate coins amount.
-	const actualCoins = getActualCoins(coins);
+	const actualCoins = Math.floor(getActualCoins(coins));
 	if(actualCoins == COIN_PARSE_ERROR_NUMBER_INVALID) {
+		return false;
+	}
+
+	if(actualCoins < 1000) {
 		return false;
 	}
 
