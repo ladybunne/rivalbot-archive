@@ -59,7 +59,7 @@ export function lastRollover(now: DateTime): Interval {
 
 function currentMissionCount(sinceLastEventStart: Interval): number {
 	if(sinceLastEventStart.toDuration() > EVENT_ACTIVE_DAYS) return 0;
-	return Math.min(MISSIONS_FIRST_DAY + MISSIONS_PER_DAY * sinceLastEventStart.toDuration('days').days, MISSIONS_TOTAL);
+	return Math.min(MISSIONS_FIRST_DAY + MISSIONS_PER_DAY * Math.floor(sinceLastEventStart.toDuration('days').days), MISSIONS_TOTAL);
 }
 
 /** Find the time until the next rollover on Wednesday or Saturday. */
@@ -145,7 +145,7 @@ async function updateTournamentTimer(guild: Guild, untilNextTournamentStart: Int
 
 export function getEventTimerText(sinceLastEventStart: Interval, untilNextEventStart: Interval) {
 	if(sinceLastEventStart.toDuration() < EVENT_ACTIVE_DAYS) {
-		return `Day ${sinceLastEventStart.toDuration('days').days + 1}/${EVENT_ACTIVE_DAYS.days}`;
+		return `Day ${Math.ceil(sinceLastEventStart.toDuration('days').days)}/${EVENT_ACTIVE_DAYS.days}`;
 	}
 	return `Next: ${formatIntervalToDuration(untilNextEventStart)}`;
 }

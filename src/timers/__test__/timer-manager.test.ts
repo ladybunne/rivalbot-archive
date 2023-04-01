@@ -5,9 +5,15 @@ import { DateTime, Duration, Interval } from 'luxon';
 const mondayMorning 			= DateTime.utc(2023, 3, 13, 9, 0);
 const tuesdayEvening 			= DateTime.utc(2023, 3, 14, 18, 0);
 const wednesdayBeforeRollover 	= DateTime.utc(2023, 3, 15, 23, 55);
-const thursdayAtRollover 		= DateTime.utc(2023, 3, 16, 0, 0)
-const sundayNextWeekAtRollover 	= DateTime.utc(2023, 3, 26, 0, 0)
-const sundayWeekAfterAtRollover	= DateTime.utc(2023, 4, 2, 0, 0)
+const thursdayAtRollover 		= DateTime.utc(2023, 3, 16, 0, 0);
+const sundayNextWeekAtRollover 	= DateTime.utc(2023, 3, 26, 0, 0);
+const sundayWeekAfterAtRollover	= DateTime.utc(2023, 4, 2, 0, 0);
+
+const tournamentTextRegex = /^((Next: ([0-6]d )?([12]?[0-9]h))|(Open, ([0-6]d )?([12]?[0-9]h) left))/
+const eventTextRegex = /^((Day [0-9]{1,2}\/14)|(Next: ([0-9]d )?([12]?[0-9]h)))/
+const missionsTextRegex = /^(([0-9]{1,2}\/19, ((next: ([0-9]d )?([12]?[0-9]h))|(([0-9]d )?([12]?[0-9]h) left)))|(\(hidden\)))/
+
+const durationTextRegex = /([0-9]d )?([12]?[0-9]h)/
 
 const TEST_DATETIMES = [mondayMorning, tuesdayEvening, wednesdayBeforeRollover, thursdayAtRollover,
 	sundayNextWeekAtRollover, sundayWeekAfterAtRollover];
@@ -93,4 +99,37 @@ test('duration until next event end matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.nextEventEnd(dateTime);
 	const values = [ '7d 15h', '6d 6h', '5d 0h', '6d 0h', '17d 0h', '10d 0h' ];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
+});
+
+test('tournament timer strings match expected regex', () => {
+	const timerStrings = TEST_DATETIMES.map((dateTime: DateTime) => {
+		const untilNextTournamentStart = timerManager.nextTournamentStart(dateTime);
+		const untilNextTournamentEnd = timerManager.nextTournamentEnd(dateTime);
+		return timerManager.getTournamentTimerText(untilNextTournamentStart, untilNextTournamentEnd);
+	});
+	const allMatch = timerStrings.every(timerString => tournamentTextRegex.test(timerString));
+	expect(allMatch).toBe(true);
+});
+
+test('event timer strings match expected regex', () => {
+	const timerStrings = TEST_DATETIMES.map((dateTime: DateTime) => {
+		const sinceLastEventStart = timerManager.lastEventStart(dateTime);
+		const untilNextEventStart = timerManager.nextEventStart(dateTime);
+		return timerManager.getEventTimerText(sinceLastEventStart, untilNextEventStart);
+	});
+	console.log(timerStrings);
+	const allMatch = timerStrings.every(timerString => eventTextRegex.test(timerString));
+	expect(allMatch).toBe(true);
+});
+
+test('missions timer strings match expected regex', () => {
+	const timerStrings = TEST_DATETIMES.map((dateTime: DateTime) => {
+		const sinceLastEventStart = timerManager.lastEventStart(dateTime);
+		const untilTomorrow = timerManager.nextRollover(dateTime);
+		const untilNextEventEnd = timerManager.nextEventEnd(dateTime);
+		return timerManager.getMissionsTimerText(sinceLastEventStart, untilTomorrow, untilNextEventEnd);
+	});
+	console.log(timerStrings);
+	const allMatch = timerStrings.every(timerString => missionsTextRegex.test(timerString));
+	expect(allMatch).toBe(true);
 });
