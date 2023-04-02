@@ -1,8 +1,7 @@
 import { CoinsUpdate, PrismaClient } from '@prisma/client';
 import { Client, Guild, MessageCreateOptions, TextChannel, EmbedBuilder } from 'discord.js';
-import fs from 'fs/promises';
 import schedule from 'node-schedule';
-import { clientId, channelCoinsLeaderboardId, channelEventsFeedId } from '../configs/rivalbot-config.json'
+import { clientId, channelCoinsLeaderboardId, channelEventsFeedId, userBotAuthorId } from '../configs/rivalbot-config.json'
 import * as rivalManager from "../rivals/rival-manager";
 import { COIN_PARSE_ERROR_NUMBER_INVALID, getActualCoins, getDisplayCoins } from './coins-helpers';
 
@@ -28,7 +27,7 @@ function scheduleLeaderboardUpdates(guild: Guild) {
 // Updates the leaderboard embed.
 export async function updateLeaderboard(guild: Guild) {
 	const channel = guild.channels.cache.get(channelCoinsLeaderboardId) as TextChannel;
-	let embedMessageFetch = await channel.messages.fetch()
+	const embedMessageFetch = await channel.messages.fetch()
 		.then((messages) => messages.first());
 
 	if(!embedMessageFetch) {
@@ -42,13 +41,15 @@ export async function updateLeaderboard(guild: Guild) {
 
 async function getRivalPositions(): Promise<CoinsUpdate[]> {
 	// Rewrite this to be a single Prisma query, if I can figure out how.
-	let rivals = await prisma.rival.findMany();
+	const rivals = await prisma.rival.findMany();
 	const positions: CoinsUpdate[] = await Promise.all(rivals.map(async (rival) =>
 		rivalManager.getLatestCoinsUpdate(rival.id)
 	));
 
 	// This should replace the above. Hopefully.
-	const positions2 = prisma.rival.findMany({
+	// UPDATE: It needs revisiting to ensure it conforms to the right data type.
+	// I wish I was more experienced with Prisma.
+	const positions2 = await prisma.rival.findMany({
 		select: {
 			coinsUpdates: {
 				orderBy: [
@@ -66,10 +67,13 @@ async function getRivalPositions(): Promise<CoinsUpdate[]> {
 export async function update(id: string, coins: string, timestamp: number, guild: Guild): Promise<boolean> {
 	// Validate coins amount.
 	const actualCoins = Math.floor(getActualCoins(coins));
+
+	// If the coin input doesn't match the expected format, fail.
 	if(actualCoins == COIN_PARSE_ERROR_NUMBER_INVALID) {
 		return false;
 	}
 
+	// If the coin amount is missing a unit, it's almost certainly an input error.
 	if(actualCoins < 1000) {
 		return false;
 	}
@@ -114,9 +118,12 @@ function getBadgeByPosition(position: number): string {
 }
 
 function formatCoinsUpdateForLeaderboard(update: CoinsUpdate, position: number, now: Date, guild: Guild) {
+	const member = guild.members.cache.get(update.rivalId)
+	const userDisplayName = member ? member.user.username : "Unknown Rival";
+
 	return `${getBadgeByPosition(position)} ` +
 		`${position + 1}. ` +
-		`**${guild.members.cache.get(update.rivalId).user.username}**: ${getDisplayCoins(Number(update.coins))} ` +
+		`**${userDisplayName}**: ${getDisplayCoins(Number(update.coins))} ` +
 		`${getTimeSinceMostRecentEntry(Number(update.timestamp), now)}`;
 }
 
@@ -150,21 +157,21 @@ export async function leaderboardEmbed(guild: Guild): Promise<EmbedBuilder> {
 }
 
 async function checkLeaderboardPositionChanges(guild: Guild, id: string) {
-	let newPositions = await getRivalPositions();
-	let overtakees: Map<number, CoinsUpdate> = new Map<number, CoinsUpdate>;
+	const newPositions = await getRivalPositions();
+	const overtakees: Map<number, CoinsUpdate> = new Map<number, CoinsUpdate>;
 
 	for(const position of newPositions) {
-		const newPosition = newPositions.indexOf(position);
 		const oldPosition = rivalPositions.findIndex((update) => update.id == position.id);
-		console.log(`${newPosition} <- ${oldPosition}`);
-		if(newPosition != -1 && oldPosition != -1 && newPositions.indexOf(position) < rivalPositions.indexOf(position)) {
+		const newPosition = newPositions.indexOf(position);
+		// console.log(`${oldPosition} -> ${newPosition}`, newPosition != -1, oldPosition != -1, oldPosition < newPosition);
+		if(oldPosition != -1 && newPosition != -1 && oldPosition < newPosition) {
 			overtakees.set(newPositions.indexOf(position), position);
 		}
 	}
 
 	if(overtakees.size) {
 		const overtaker = newPositions.find((position) => position.rivalId == id);
-		const notFirstSubmission = Boolean(rivalPositions.find((position) => position.rivalId == id));
+		const notFirstSubmission = rivalPositions.some((position) => position.rivalId == id);
 		const oldCoins = rivalPositions.find((position) => position.rivalId == id)?.coins ?? 0;
 		await sendOvertakeEmbeds(guild, overtaker, newPositions.indexOf(overtaker), Number(oldCoins), overtakees, notFirstSubmission);
 	}
@@ -172,11 +179,11 @@ async function checkLeaderboardPositionChanges(guild: Guild, id: string) {
 	rivalPositions = newPositions;
 }
 
-async function overtakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition: number,
-	oldCoins: number, overtakees: Map<number, CoinsUpdate>, ping: boolean): Promise<MessageCreateOptions> {
+function overtakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition: number,
+	oldCoins: number, overtakees: Map<number, CoinsUpdate>, ping: boolean): MessageCreateOptions {
 
 	const overtakeText = `🟢 **${guild.members.cache.get(overtaker.rivalId).user.username}** claims ` +
-		`**${formatPosition(newPosition)}** place! (${getDisplayCoins(oldCoins)} -> ${getDisplayCoins(Number(overtaker.coins))} coins)`;
+		`**${formatPosition(newPosition + 1)}** place! (${getDisplayCoins(oldCoins)} -> ${getDisplayCoins(Number(overtaker.coins))} coins)`;
 
 	const lines = [ ...overtakees.entries() ].map(([position, update]) =>
 		`🔴 **${guild.members.cache.get(update.rivalId).user.username}** is demoted to ` + 
@@ -185,8 +192,8 @@ async function overtakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition:
 
 	const demoteText = lines.reduce((acc, curr) => `${acc}${curr}\n`, "");
 
-	let pingsText: string = `<#${channelCoinsLeaderboardId}> <-- <@${overtaker.rivalId}> `;
-	if(ping&& false) {
+	let pingsText = `<#${channelCoinsLeaderboardId}> <-- <@${overtaker.rivalId}> `;
+	if(ping) {
 		const overtakeesIds = [ ...overtakees.values() ].map((update) => update.rivalId);
 		pingsText += overtakeesIds.reduce((acc, curr) => 
 			`${acc}<@${curr}> `, ``);
@@ -216,18 +223,17 @@ function formatPosition(position: number): string {
 async function sendOvertakeEmbeds(guild: Guild, overtaker: CoinsUpdate, newPosition: number,
 	oldCoins: number, overtakees: Map<number, CoinsUpdate>, ping: boolean) {
 	const channel = guild.channels.cache.get(channelEventsFeedId) as TextChannel;
-	const embeds = await overtakeEmbeds(guild, overtaker, newPosition, oldCoins, overtakees, ping);
-	channel.send(embeds);
+	const embeds = overtakeEmbeds(guild, overtaker, newPosition, oldCoins, overtakees, ping);
+	await channel.send(embeds);
 }
 
 // Test function; no longer used.
-/*
+
 export async function sendDummyOvertakeEmbeds(guild: Guild) {
-	const overtaker: CoinsUpdate = { id: 1, coins: BigInt(120), timestamp: BigInt(1), rivalId: "overtakerId" };
+	const overtaker: CoinsUpdate = { id: 1, coins: BigInt(3000), timestamp: BigInt(1), rivalId: `${userBotAuthorId}`};
 
 	const overtakees: Map<number, CoinsUpdate> = new Map<number, CoinsUpdate>;
-	overtakees.set(121, { id: 2, coins: BigInt(100), timestamp: BigInt(1), rivalId: "overtakeeId" });
+	overtakees.set(1, { id: 2, coins: BigInt(2000), timestamp: BigInt(1), rivalId: `${userBotAuthorId}` });
 
-	sendOvertakeEmbeds(guild, overtaker, 112, 80, overtakees);
+	await sendOvertakeEmbeds(guild, overtaker, 1, 1000, overtakees, false);
 }
-*/

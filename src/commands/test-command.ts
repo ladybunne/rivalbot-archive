@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { DateTime } from "luxon";
+import * as coinsManager from "../coins/coins-manager";
 import * as rivalManager from "../rivals/rival-manager";
 import * as timerManager from "../timers/timer-manager";
 
@@ -10,21 +11,8 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply({ ephemeral: true });
 
-	const now = DateTime.now();
-	
-	const untilNextRollover = timerManager.nextRollover(now);
+	await coinsManager.sendDummyOvertakeEmbeds(interaction.guild);
 
-	const untilNextTournamentStart = timerManager.nextTournamentStart(now);
-	const untilNextTournamentEnd = timerManager.nextTournamentEnd(now);
-	const sinceLastEventStart = timerManager.lastEventStart(now);
-	const untilNextEventEnd = timerManager.nextEventEnd(now);
-	const untilNextEventStart = timerManager.nextEventStart(now);
-
-	const tournamentText = timerManager.getTournamentTimerText(untilNextTournamentStart, untilNextTournamentEnd);
-	const eventText = timerManager.getEventTimerText(sinceLastEventStart, untilNextEventStart);
-	const missionsText = timerManager.getMissionsTimerText(sinceLastEventStart, untilNextRollover, untilNextEventEnd);
-
-	console.log(tournamentText, eventText, missionsText);
-
-	await interaction.editReply({ content: `This command does nothing yet... or does it?` });
+	await interaction.followUp({ content: `This is an ephemeral response.` });
+	await interaction.followUp({ content: `This is a follow-up to an initial ephemeral response.` })
 }
