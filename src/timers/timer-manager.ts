@@ -94,7 +94,7 @@ export function lastEventStart(now: DateTime): Interval {
 
 	const intervalSinceEventStartDay = Interval.fromDateTimes(EVENT_START_DAY, now);
 
-	const dayDifference = Math.floor(intervalSinceEventStartDay.toDuration('days').days % EVENT_CYCLE_LENGTH.days);
+	const dayDifference = (Math.floor(intervalSinceEventStartDay.toDuration('days').days + 1) % EVENT_CYCLE_LENGTH.days);
 
 	return Interval.fromDateTimes(rollover.end.minus({ days: dayDifference }), now);
 }
