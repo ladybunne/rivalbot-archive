@@ -1,7 +1,7 @@
 // Require the necessary discord.js classes
 import fs from 'node:fs';
 import path from 'node:path';
-import { Client, EmbedBuilder, Collection, GatewayIntentBits, TextChannel } from 'discord.js';
+import { Client, Guild, Collection, GatewayIntentBits } from 'discord.js';
 import { token, guildId } from './configs/rivalbot-config.json';
 import { Command } from './commands/commands';
 import * as rivalManager from "./rivals/rival-manager";
@@ -41,9 +41,20 @@ client.once('ready', async () => {
 	const guild = await client.guilds.fetch(guildId);
 	await guild.members.fetch();
 
+	// Thanks, Skye!
+	client.on('guildMemberAdd', async user => {
+		await guild.members.fetch({ user, force: true });
+	});
+	client.on('guildMemberRemove', async ({ id: user }) => {
+		await guild.members.fetch({ user, force: true });
+	});
+	client.on('userUpdate', async (_, user) => {
+		await guild.members.fetch({ user, force: true });
+	});
+
 	const prisma = new PrismaClient();
 
-	await rivalManager.start(guild, prisma);
+	rivalManager.start(guild, prisma);
 	await coinsManager.start(guild, prisma);
 	timerManager.start(guild);
 });
@@ -72,4 +83,4 @@ client.on('interactionCreate', async interaction => {
 });
 
 // Login to Discord with your client's token
-client.login(token);
+void client.login(token);

@@ -1,11 +1,10 @@
 import { CoinsUpdate, PrismaClient, Rival } from "@prisma/client";
 import { EmbedBuilder, Guild, GuildMember } from "discord.js";
-import * as coinsManager from "../coins/coins-manager";
 import { getDisplayCoins } from "../coins/coins-helpers";
 
 let prisma: PrismaClient;
 
-export async function start(guild: Guild, prismaClient: PrismaClient) {
+export function start(guild: Guild, prismaClient: PrismaClient) {
 	prisma = prismaClient;
 }
 
