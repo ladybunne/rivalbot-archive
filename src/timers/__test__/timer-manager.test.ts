@@ -85,7 +85,7 @@ test('duration until next tournament end matches expected values', () => {
 
 test('duration since last event start matches expected values', () => {
 	const mapFunction = (dateTime: DateTime) => timerManager.lastEventStart(dateTime);
-	const values = [ '5d 9h', '6d 18h', '7d 23h', '8d 0h', '18d 0h', '4d 0h' ];
+	const values = ['6d 9h', '7d 18h', '8d 23h', '9d 0h', '19d 0h', '5d 0h'];
 	expect(mapAndCheckFormattedString(mapFunction)).toEqual(values);
 });
 
