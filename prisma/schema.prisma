@@ -13,7 +13,13 @@ datasource db {
 
 model Rival {
   id String @id @unique
+  tagline String?
+  startDate BigInt?
+  tournamentStrategy String @default("Unspecified")
+  farmingStrategy String @default("Unspecified")
   coinsUpdates CoinsUpdate[]
+  tournamentUpdates TournamentUpdate[]
+  rivalCardThreadId String?
 }
 
 model CoinsUpdate {
@@ -24,3 +30,11 @@ model CoinsUpdate {
   rivalId String 
 }
 
+model TournamentUpdate {
+  id Int @id @default(autoincrement())
+  waves BigInt
+  timestamp BigInt
+  version String
+  rival Rival @relation(fields: [rivalId], references: [id])
+  rivalId String 
+}

@@ -78,7 +78,7 @@ export async function update(id: string, coins: string, timestamp: number, guild
 		return false;
 	}
 
-	const rival = await rivalManager.createOrGetRival(id);
+	const rival = await rivalManager.createOrGetRival(id, guild);
 	await prisma.coinsUpdate.create({
 		data: {
 			coins: actualCoins,
