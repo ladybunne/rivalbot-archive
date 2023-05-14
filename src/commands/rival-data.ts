@@ -9,7 +9,12 @@ export const data = new SlashCommandBuilder()
             .setDescription("Set data about yourself.")
             .addStringOption(option =>
                 option.setName("tagline")
-                    .setDescription("Your personal tagline.")));
+                    .setDescription("Your personal tagline."))
+            .addStringOption(option =>
+                option.setName("start-date")
+                    .setDescription("The day you started playing The Tower. Please enter EXACTLY what is shown in-game.")));
+                // option.setName("tagline")
+                //     .setDescription("Your personal tagline.")));
             // .addStringOption(option => 
             //     option.setName("start-date")
             //         .setDescription("The date you started playing. Enter the EXACT string the game shows you.")));
@@ -18,16 +23,28 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply({ ephemeral: false });
     
+    let replied = false;
+
     const tagline = interaction.options.getString("tagline");
     if(tagline) {
         await rivalManager.updateRivalTagline(interaction.user.id, interaction.guild, tagline);
         await interaction.followUp({ content: `Updated tagline.` });
+        replied = true;
     }
 
-    if(!interaction.replied) {
+    const startDate = interaction.options.getString("start-date");
+    if(startDate) {
+        await rivalManager.updateRivalStartDate(interaction.user.id, interaction.guild, startDate);
+        await interaction.followUp({ content: `Updated start date.` });
+        replied = true;
+    }
+
+    // Debug this.
+    if(!replied) {
         await interaction.followUp({ content: `Please invoke this command with at least one argument. Otherwise it does nothing.` });    
     }
     else {
-        await interaction.followUp({ content: `All data processed.` });
+        await interaction.followUp({ content: `All data processed. Updating rival card now.` });
+        await rivalManager.createOrUpdateRivalCard(interaction.user.id, interaction.guild);
     }
 }

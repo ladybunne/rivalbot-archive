@@ -89,6 +89,22 @@ export async function updateRivalTagline(id: string, guild: Guild, tagline: stri
 	});
 }
 
+export async function updateRivalStartDate(id: string, guild: Guild, startDate: string) {
+	const startDateParsedTemp = parseInt(startDate) ?? 0
+
+	// parse start date
+	const startDateParsed = startDateParsedTemp
+
+	await prisma.rival.update({
+		data: {
+			startDate: startDateParsed
+		},
+		where: {
+			id: id
+		}
+	})
+}
+
 export async function createOrUpdateRivalCard(id: string, guild: Guild) {
 	const member: GuildMember = guild.members.cache.get(id);
 	if(!member) return undefined;
@@ -114,6 +130,9 @@ export async function createOrUpdateRivalCard(id: string, guild: Guild) {
 	}
 	else {
 		const thread = await channel.threads.fetch(existingThreadId);
+		if(thread.archived) {
+			await thread.setArchived(false);
+		}
 		const message = await thread.fetchStarterMessage();
 		await message.edit({ embeds: [embed]})
 	}
@@ -135,7 +154,9 @@ export async function rivalCard(id: string, guild: Guild): Promise<EmbedBuilder 
 	const taglineBefore = false;
 	const embedTitle = taglineBefore ? taglineFormatted + nameFormatted : nameFormatted + taglineFormatted;
 
-	const embedDescription = `**Start Date**: ${"<t:1637391600:D>"}, ${"<t:1637391600:R>"}`;
+	const startDateFormatted = rival.startDate ? `<t:${rival.startDate}:D>, <t:${rival.startDate}:R>` : "Unspecified";
+
+	const embedDescription = `**Start Date**: ${startDateFormatted}`;
 
 	const tournamentFieldDescription = `**Champ PB**: ${"1450, <t:1680300000:R>"}\n` +
 		`**Strategy**: ${rival.tournamentStrategy}`;
