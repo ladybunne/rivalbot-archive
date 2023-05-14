@@ -34,8 +34,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const startDate = interaction.options.getString("start-date");
     if(startDate) {
-        await rivalManager.updateRivalStartDate(interaction.user.id, interaction.guild, startDate);
-        await interaction.followUp({ content: `Updated start date.` });
+        const startDateOutcome = await rivalManager.updateRivalStartDate(interaction.user.id, interaction.guild, startDate);
+        await interaction.followUp({ content: startDateOutcome ? "Updated start date." : "Could not update start date. Double-check your input and try again." });
         replied = true;
     }
 
@@ -44,7 +44,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         await interaction.followUp({ content: `Please invoke this command with at least one argument. Otherwise it does nothing.` });    
     }
     else {
-        await interaction.followUp({ content: `All data processed. Updating rival card now.` });
-        await rivalManager.createOrUpdateRivalCard(interaction.user.id, interaction.guild);
+        const thread = await rivalManager.createOrUpdateRivalCard(interaction.user.id, interaction.guild);
+        await interaction.followUp({ content: `All data processed. See the updated rival card here: <#${thread.id}>` });
     }
 }

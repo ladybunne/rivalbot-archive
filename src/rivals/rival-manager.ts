@@ -1,7 +1,8 @@
 import { PrismaClient, Rival, CoinsUpdate } from "@prisma/client";
-import { EmbedBuilder, ForumChannel, Guild, GuildMember } from "discord.js";
+import { EmbedBuilder, ForumChannel, Guild, GuildMember, ThreadChannel } from "discord.js";
 import { getDisplayCoins } from "../coins/coins-helpers";
 import { channelRivalCardsId } from "../configs/rivalbot-config.json";
+import { DateTime } from "luxon";
 
 let prisma: PrismaClient;
 
@@ -89,23 +90,27 @@ export async function updateRivalTagline(id: string, guild: Guild, tagline: stri
 	});
 }
 
-export async function updateRivalStartDate(id: string, guild: Guild, startDate: string) {
-	const startDateParsedTemp = parseInt(startDate) ?? 0
+export async function updateRivalStartDate(id: string, guild: Guild, startDate: string): Promise<boolean> {
+	const startDateParsed = DateTime.fromFormat(startDate, "MMMM dd yyyy")
+
+	if(!startDateParsed.isValid) return false;
 
 	// parse start date
-	const startDateParsed = startDateParsedTemp
+	const startDateInUnixTime = startDateParsed.toUnixInteger();
 
 	await prisma.rival.update({
 		data: {
-			startDate: startDateParsed
+			startDate: startDateInUnixTime
 		},
 		where: {
 			id: id
 		}
 	})
+
+	return true;
 }
 
-export async function createOrUpdateRivalCard(id: string, guild: Guild) {
+export async function createOrUpdateRivalCard(id: string, guild: Guild): Promise<ThreadChannel<boolean>> {
 	const member: GuildMember = guild.members.cache.get(id);
 	if(!member) return undefined;
 
@@ -118,24 +123,27 @@ export async function createOrUpdateRivalCard(id: string, guild: Guild) {
 	const embed = await rivalCard(id, guild);
 
 	if(!existingThreadId) {
-		const newThreadId = await channel.threads.create({ name: `Rival Card - ${member.user.username}`, message: { embeds: [embed] } });
+		const thread = await channel.threads.create({ name: `Rival Card - ${member.user.username}`, message: { embeds: [embed] } });
 		await prisma.rival.update({
 			data: {
-				rivalCardThreadId: newThreadId.id
+				rivalCardThreadId: thread.id
 			},
 			where: {
 				id: id
 			}
 		})
+		return thread;
 	}
 	else {
-		const thread = await channel.threads.fetch(existingThreadId);
+		const thread = await channel.threads.fetch(existingThreadId) as ThreadChannel;
 		if(thread.archived) {
 			await thread.setArchived(false);
 		}
 		const message = await thread.fetchStarterMessage();
-		await message.edit({ embeds: [embed]})
+		await message.edit({ embeds: [embed]});
+		return thread;
 	}
+	
 }
 
 export async function rivalCard(id: string, guild: Guild): Promise<EmbedBuilder | undefined> {
