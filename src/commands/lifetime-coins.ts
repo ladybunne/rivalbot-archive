@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, DataResolver, EmbedBuilder } from "discord.js";
 import * as coinsManager from "../coins/coins-manager"
 import { channelCoinsLeaderboardId } from '../configs/rivalbot-config.json'
-
+import * as rivalManager from "../rivals/rival-manager";
 
 export const data = new SlashCommandBuilder()
 	.setName('lifetime-coins')
@@ -50,4 +50,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		.setFooter({ text: 'This is a work in progress. Please expect bugs.' });
 
 	await interaction.editReply({ embeds: [embed] });
+
+	// Update Rival Card.
+	await rivalManager.createOrUpdateRivalCard(interaction.user.id, interaction.guild);
 }
