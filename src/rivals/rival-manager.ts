@@ -1,4 +1,4 @@
-import { PrismaClient, Rival, CoinsUpdate } from "@prisma/client";
+import { PrismaClient, Rival, CoinsUpdate, TournamentUpdate } from "@prisma/client";
 import { EmbedBuilder, ForumChannel, Guild, GuildMember, ThreadChannel } from "discord.js";
 import { getDisplayCoins } from "../coins/coins-helpers";
 import { channelRivalCardsId } from "../configs/rivalbot-config.json";
@@ -62,7 +62,7 @@ export async function removeRival(id: string, guild: Guild): Promise<boolean> {
 	return true;
 }
 
-export async function getLatestCoinsUpdate(id: string): Promise<CoinsUpdate> {
+export async function getLatestCoinsUpdate(id: string): Promise<CoinsUpdate | undefined> {
 	return await prisma.coinsUpdate.findFirst({
 		where: {
 			rivalId: id
@@ -75,8 +75,20 @@ export async function getLatestCoinsUpdate(id: string): Promise<CoinsUpdate> {
 	})
 }
 
-export function getLatestTournamentUpdate(id: string) {
-	return;
+// This will want some better logic eventually:
+// - always pull the BEST tournament update (highest waves)
+// - ...but prefer current version entries over older ones
+export async function getLatestTournamentUpdate(id: string): Promise<TournamentUpdate | undefined> {
+	return await prisma.tournamentUpdate.findFirst({
+		where: {
+			rivalId: id
+		},
+		orderBy: [
+			{
+				timestamp: "desc"
+			}
+		]
+	})
 }
 
 export async function updateRivalTagline(id: string, tagline: string) {
@@ -133,8 +145,6 @@ export async function updateRivalFarmingStrategy(id: string, strategy: string) {
 	})
 }
 
-
-
 export async function createOrUpdateRivalCard(id: string, guild: Guild): Promise<ThreadChannel<boolean>> {
 	const member: GuildMember = guild.members.cache.get(id);
 	if(!member) return undefined;
@@ -164,6 +174,9 @@ export async function createOrUpdateRivalCard(id: string, guild: Guild): Promise
 		if(thread.archived) {
 			await thread.setArchived(false);
 		}
+		
+		// Add something for updating the thread's name on username changes.
+		
 		const message = await thread.fetchStarterMessage();
 		await message.edit({ embeds: [embed]});
 		return thread;
@@ -191,13 +204,18 @@ export async function rivalCard(id: string, guild: Guild): Promise<EmbedBuilder 
 	const embedDescription = `**Start Date**: ${startDateFormatted}`;
 
 	// "1450, <t:1680300000:R>"
-	const champPBFormatted = "Not implemented"
+	// TODO Add staling formatting here. I had an example somewhere.
+	const champPB = await getLatestTournamentUpdate(member.id);
+	const champPBTimestamp = champPB ? Math.floor(Number(champPB.timestamp) / 1000) : "never";
+	const champPBFormatted = champPB ? `Wave ${champPB.waves}, <t:${champPBTimestamp}:R>` : "Unspecified";
 
 	const tournamentFieldDescription = `**Champ PB**: ${champPBFormatted}\n` +
 		`**Strategy**: ${rival.tournamentStrategy}`;
 
-	const lifetimeCoins = getDisplayCoins(Number((await getLatestCoinsUpdate(member.id)).coins));
-	const farmingFieldDescription = `**Lifetime Coins**: ${lifetimeCoins}\n` +
+	const lifetimeCoins = await getLatestCoinsUpdate(member.id);
+	const lifetimeCoinsFormatted = lifetimeCoins ? getDisplayCoins(Number(lifetimeCoins.coins)) : "Unspecified";
+
+	const farmingFieldDescription = `**Lifetime Coins**: ${lifetimeCoinsFormatted}\n` +
 		`**Strategy**: ${rival.farmingStrategy}`;
 
 	const mainStatsFormatted = "Not implemented";
