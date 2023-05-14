@@ -61,7 +61,9 @@ async function getRivalPositions(): Promise<CoinsUpdate[]> {
 			}
 		},
 	});
-	return positions.sort((a, b) => Number(b.coins - a.coins));
+
+	// Some magic here to filter out falsy values (the `.filter(Boolean)` bit).
+	return positions.filter(Boolean).sort((a, b) => Number(b.coins - a.coins));
 }
 
 export async function update(id: string, coins: string, timestamp: number, guild: Guild): Promise<boolean> {
@@ -92,6 +94,7 @@ export async function update(id: string, coins: string, timestamp: number, guild
 	return true;
 }
 
+// This should probably be rewritten to use Luxon.
 function getTimeSinceMostRecentEntry(timestamp: number, now: Date): string {
 	const difference = Math.floor((now.getTime() - timestamp) / 1000 / 60);
 	let display = `${Math.floor(difference) < 1 ? "just now" : `${Math.floor(difference)}m`}`
@@ -136,7 +139,7 @@ async function formattedLeaderboard(guild: Guild): Promise<string> {
 		rivalManager.getLatestCoinsUpdate(rival.id)
 	));
 
-	const updatesSorted = [...updates].sort((a, b) => Number(b.coins - a.coins));
+	const updatesSorted = [...updates].filter(Boolean).sort((a, b) => Number(b.coins - a.coins));
 
 	const lines = updatesSorted.map((update, i) => formatCoinsUpdateForLeaderboard(update, i, now, guild));
 
