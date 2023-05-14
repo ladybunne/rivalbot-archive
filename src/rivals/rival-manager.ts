@@ -79,7 +79,7 @@ export function getLatestTournamentUpdate(id: string) {
 	return;
 }
 
-export async function updateRivalTagline(id: string, guild: Guild, tagline: string) {
+export async function updateRivalTagline(id: string, tagline: string) {
 	await prisma.rival.update({ 
 		data: {
 			tagline: tagline
@@ -90,7 +90,7 @@ export async function updateRivalTagline(id: string, guild: Guild, tagline: stri
 	});
 }
 
-export async function updateRivalStartDate(id: string, guild: Guild, startDate: string): Promise<boolean> {
+export async function updateRivalStartDate(id: string, startDate: string): Promise<boolean> {
 	const startDateParsed = DateTime.fromFormat(startDate, "MMMM dd yyyy")
 
 	if(!startDateParsed.isValid) return false;
@@ -109,6 +109,30 @@ export async function updateRivalStartDate(id: string, guild: Guild, startDate: 
 
 	return true;
 }
+
+export async function updateRivalTournamentStrategy(id: string, strategy: string) {
+	await prisma.rival.update({
+		data: {
+			tournamentStrategy: strategy
+		},
+		where: {
+			id: id
+		}
+	})
+}
+
+export async function updateRivalFarmingStrategy(id: string, strategy: string) {
+	await prisma.rival.update({
+		data: {
+			farmingStrategy: strategy
+		},
+		where: {
+			id: id
+		}
+	})
+}
+
+
 
 export async function createOrUpdateRivalCard(id: string, guild: Guild): Promise<ThreadChannel<boolean>> {
 	const member: GuildMember = guild.members.cache.get(id);
@@ -143,7 +167,6 @@ export async function createOrUpdateRivalCard(id: string, guild: Guild): Promise
 		await message.edit({ embeds: [embed]});
 		return thread;
 	}
-	
 }
 
 export async function rivalCard(id: string, guild: Guild): Promise<EmbedBuilder | undefined> {
@@ -166,22 +189,27 @@ export async function rivalCard(id: string, guild: Guild): Promise<EmbedBuilder 
 
 	const embedDescription = `**Start Date**: ${startDateFormatted}`;
 
-	const tournamentFieldDescription = `**Champ PB**: ${"1450, <t:1680300000:R>"}\n` +
+	// "1450, <t:1680300000:R>"
+	const champPBFormatted = "Not implemented"
+
+	const tournamentFieldDescription = `**Champ PB**: ${champPBFormatted}\n` +
 		`**Strategy**: ${rival.tournamentStrategy}`;
 
 	const lifetimeCoins = getDisplayCoins(Number((await getLatestCoinsUpdate(member.id)).coins));
 	const farmingFieldDescription = `**Lifetime Coins**: ${lifetimeCoins}\n` +
 		`**Strategy**: ${rival.farmingStrategy}`;
 
-	const workshopFieldDescription = `**Main Stats**: x/y/z\n` +
-		`**Ultimate Weapons**: ${"Unspecified"}`;
+	const mainStatsFormatted = "Not implemented";
+	const ultimateWeaponsFormatted = "Not implemented";
+
+	const workshopFieldDescription = `**Main Stats**: ${mainStatsFormatted}\n` +
+		`**Ultimate Weapons**: ${ultimateWeaponsFormatted}`;
 
 	const embed = new EmbedBuilder()
 		.setThumbnail(embedThumbnail)
 		.setColor(embedColor)
 		.setTitle(embedTitle)
 		.setDescription(embedDescription)
-		// .setDescription(await rivalCardDescription(member, rival))
 		.addFields(
 			{ name: "__**Tournament**__", value: tournamentFieldDescription, inline: true },
 			{ name: "__**Farming**__", value: farmingFieldDescription, inline: true },
