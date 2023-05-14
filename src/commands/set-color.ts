@@ -1,4 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import * as rivalManager from "../rivals/rival-manager";
 
 const colorHexRegex = /#?([0-9A-Fa-f]{6})/
 
@@ -29,6 +30,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		const oldColor = role.color;
 		await role.setColor(color);
 		await interaction.editReply({ content: `Changed ${role.name}'s color from \`#${oldColor.toString(16)}\` to \`#${matches[1]}\`.` });
+		
+		// Update Rival Card.
+		await rivalManager.createOrUpdateRivalCard(interaction.user.id, interaction.guild);
 	}
 	catch(e) {
 		await interaction.editReply({ content: `Couldn't change role color (error: ${e}).` });
