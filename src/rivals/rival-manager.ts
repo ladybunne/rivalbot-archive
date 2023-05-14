@@ -75,6 +75,9 @@ export async function getLatestCoinsUpdate(id: string): Promise<CoinsUpdate | un
 	})
 }
 
+// This will want some better logic eventually:
+// - always pull the BEST tournament update (highest waves)
+// - ...but prefer current version entries over older ones
 export async function getLatestTournamentUpdate(id: string): Promise<TournamentUpdate | undefined> {
 	return await prisma.tournamentUpdate.findFirst({
 		where: {
