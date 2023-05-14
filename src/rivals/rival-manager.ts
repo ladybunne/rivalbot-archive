@@ -91,7 +91,8 @@ export async function updateRivalTagline(id: string, tagline: string) {
 }
 
 export async function updateRivalStartDate(id: string, startDate: string): Promise<boolean> {
-	const startDateParsed = DateTime.fromFormat(startDate, "MMMM dd yyyy")
+	// Time crimes have been done here.
+	const startDateParsed = DateTime.fromFormat(startDate, "MMMM dd yyyy", { zone: "UTC-11" })
 
 	if(!startDateParsed.isValid) return false;
 
