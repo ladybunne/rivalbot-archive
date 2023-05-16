@@ -12,7 +12,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
 	const forcePost = interaction.options.getBoolean('force-post') ?? false;
 	if(forcePost) {
-		await interaction.reply({ embeds: [await coinsManager.leaderboardEmbed(interaction.guild)], ephemeral: false });
+		await interaction.reply({ embeds: [await coinsManager.leaderboardEmbed()], ephemeral: false });
 	}
 	else {
 		const response =  `Please see <#${channelCoinsLeaderboardId}> for a live-updating version of the coins leaderboard!` + 
