@@ -4,13 +4,17 @@ import schedule from 'node-schedule';
 import { clientId, channelCoinsLeaderboardId, channelEventsFeedId, userBotAuthorId } from '../configs/rivalbot-config.json'
 import * as rivalManager from "../rivals/rival-manager";
 import { COIN_PARSE_ERROR_NUMBER_INVALID, getActualCoins, getDisplayCoins } from './coins-helpers';
+import { Leaderboard, LeaderboardGetRivalRanks, RivalRank } from '../leaderboard/leaderboard';
 
 let prisma: PrismaClient;
 
 let rivalPositions: CoinsUpdate[];
 
+let leaderboard: Leaderboard;
+
 export async function start(guild: Guild, prismaClient: PrismaClient) {
 	prisma = prismaClient;
+	leaderboard = new Leaderboard("Top Lifetime Coins", getRivalRanks(guild), getDisplayCoins)
 	scheduleLeaderboardUpdates(guild);
 	await updateLeaderboard(guild);
 	rivalPositions = await getRivalPositions();
@@ -24,6 +28,22 @@ function scheduleLeaderboardUpdates(guild: Guild) {
 	console.log("Scheduled coins leaderboard to update every five minutes.");
 }
 
+function getRivalRanks(guild: Guild): LeaderboardGetRivalRanks {
+	const func = async () => {
+		const positions = await getRivalPositions();
+		return positions.map((position, i) => {
+			return {
+				name: guild.members.cache.get(position.rivalId).user.username,
+				value: Number(position.coins),
+				position: i,
+				timestamp: Number(position.timestamp)
+			}
+		});
+	}
+
+	return func;
+}
+
 // Updates the leaderboard embed.
 export async function updateLeaderboard(guild: Guild) {
 	const channel = guild.channels.cache.get(channelCoinsLeaderboardId) as TextChannel;
@@ -31,11 +51,11 @@ export async function updateLeaderboard(guild: Guild) {
 		.then((messages) => messages.first());
 
 	if(!embedMessageFetch) {
-		await channel.send({ embeds: [await leaderboardEmbed(guild)] });
+		await channel.send({ embeds: [await leaderboardEmbed()] });
 	}
-	// This check is to allow the dev version of RivalBot to ignore the production version's coin leaderboard message.
+	// This check is to allow the dev version of RivalBot to ignore the production version's leaderboard message.
 	else if(embedMessageFetch.author.id == clientId){
-		await embedMessageFetch.edit({ embeds: [await leaderboardEmbed(guild)] });
+		await embedMessageFetch.edit({ embeds: [await leaderboardEmbed()] });
 	}
 }
 
@@ -94,69 +114,8 @@ export async function update(id: string, coins: string, timestamp: number, guild
 	return true;
 }
 
-// This should probably be rewritten to use Luxon.
-function getTimeSinceMostRecentEntry(timestamp: number, now: Date): string {
-	const difference = Math.floor((now.getTime() - timestamp) / 1000 / 60);
-	let display = `${Math.floor(difference) < 1 ? "just now" : `${Math.floor(difference)}m`}`
-	if(difference > 60 * 24) {
-		display = `${Math.floor(difference / 60 / 24)}d`
-	}
-	else if(difference > 60) {
-		display = `${Math.floor(difference / 60)}h`
-	}
-	return ` _(${display})_`;
-}
-
-function getBadgeByPosition(position: number): string {
-	switch(position) {
-		case 0:
-			return "🥇";
-		case 1:
-			return "🥈";
-		case 2:
-			return "🥉";
-		default:
-			return "";
-	}
-}
-
-function formatCoinsUpdateForLeaderboard(update: CoinsUpdate, position: number, now: Date, guild: Guild) {
-	const member = guild.members.cache.get(update.rivalId)
-	const userDisplayName = member ? member.user.username : "Unknown Rival";
-
-	return `${getBadgeByPosition(position)} ` +
-		`${position + 1}. ` +
-		`**${userDisplayName}**: ${getDisplayCoins(Number(update.coins))} ` +
-		`${getTimeSinceMostRecentEntry(Number(update.timestamp), now)}`;
-}
-
-async function formattedLeaderboard(guild: Guild): Promise<string> {
-	const now = new Date(Date.now());
-
-	const rivals = await prisma.rival.findMany();
-
-	const updates: CoinsUpdate[] = await Promise.all(rivals.map(async (rival) =>
-		rivalManager.getLatestCoinsUpdate(rival.id)
-	));
-
-	const updatesSorted = [...updates].filter(Boolean).sort((a, b) => Number(b.coins - a.coins));
-
-	const lines = updatesSorted.map((update, i) => formatCoinsUpdateForLeaderboard(update, i, now, guild));
-
-	const output = lines.reduce((acc, curr) => `${acc}${curr}\n`, "");
-	
-	return output ? output : "No entries.";
-}
-
-export async function leaderboardEmbed(guild: Guild): Promise<EmbedBuilder> {
-	const embed = new EmbedBuilder()
-	.setColor(15844367)
-	.setTitle('Top Lifetime Coins')
-	.setDescription(await formattedLeaderboard(guild))
-	.setTimestamp()
-	.setFooter({ text: 'This is a work in progress. Please expect bugs.' });
-
-	return embed;
+export async function leaderboardEmbed(): Promise<EmbedBuilder> {
+	return await leaderboard.leaderboardEmbed();
 }
 
 async function checkLeaderboardPositionChanges(guild: Guild, id: string) {

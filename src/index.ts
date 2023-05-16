@@ -6,8 +6,8 @@ import { token, guildId } from './configs/rivalbot-config.json';
 import { Command } from './commands/commands';
 import * as rivalManager from "./rivals/rival-manager";
 import * as coinsManager from "./coins/coins-manager";
-import * as timerManager from "./timers/timer-manager";
 import * as tournamentManager from "./tournament/tournament-manager";
+import * as timerManager from "./timers/timer-manager";
 import { PrismaClient } from '@prisma/client';
 
 // Create a new client instance
@@ -57,8 +57,8 @@ client.once('ready', async () => {
 
 	rivalManager.start(guild, prisma);
 	await coinsManager.start(guild, prisma);
+	await tournamentManager.start(guild, prisma);
 	timerManager.start(guild);
-	tournamentManager.start(guild, prisma);
 });
 
 client.on('interactionCreate', async interaction => {
