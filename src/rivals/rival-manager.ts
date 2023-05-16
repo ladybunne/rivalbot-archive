@@ -145,6 +145,39 @@ export async function updateRivalFarmingStrategy(id: string, strategy: string) {
 	})
 }
 
+export async function updateRivalDamage(id: string, damage: number) {
+	await prisma.rival.update({
+		data: {
+			damage: damage
+		},
+		where: {
+			id: id
+		}
+	})
+}
+
+export async function updateRivalHealth(id: string, health: number) {
+	await prisma.rival.update({
+		data: {
+			health: health
+		},
+		where: {
+			id: id
+		}
+	})
+}
+
+export async function updateRivalAbsdef(id: string, absdef: number) {
+	await prisma.rival.update({
+		data: {
+			absdef: absdef
+		},
+		where: {
+			id: id
+		}
+	})
+}
+
 export async function createOrUpdateRivalCard(id: string, guild: Guild): Promise<ThreadChannel<boolean>> {
 	const member: GuildMember = guild.members.cache.get(id);
 	if(!member) return undefined;
@@ -218,7 +251,12 @@ export async function rivalCard(id: string, guild: Guild): Promise<EmbedBuilder 
 	const farmingFieldDescription = `**Lifetime Coins**: ${lifetimeCoinsFormatted}\n` +
 		`**Strategy**: ${rival.farmingStrategy}`;
 
-	const mainStatsFormatted = "Not implemented";
+	const damage = rival.damage;
+	const health = rival.health;
+	const absdef = rival.absdef;
+
+	const mainStatsFormatted = (damage || health || absdef) ? `${damage ? damage : "?"}/${health ? health : "?"}/${absdef ? absdef : "?"}` : "Unspecified";
+
 	const ultimateWeaponsFormatted = "Not implemented";
 
 	const workshopFieldDescription = `**Main Stats**: ${mainStatsFormatted}\n` +
@@ -238,16 +276,4 @@ export async function rivalCard(id: string, guild: Guild): Promise<EmbedBuilder 
 		.setTimestamp();
 
 	return embed;
-}
-
-async function rivalCardDescriptionOld(member: GuildMember, rival: Rival): Promise<string> {
-	return `**Start Date**: ${"<t:1637391600:D>"}, ${"<t:1637391600:R>"}\n\n` +
-
-		`**Lifetime Coins**: ${getDisplayCoins(Number((await getLatestCoinsUpdate(member.id)).coins))}\n` +
-		`**Tournament PB:** ${"Champion 461"}\n` +
-		`**Tournament Strategy**: ${"Unspecified"}\n\n` +
-
-		`**Workshop**: ${"2000/2000/2000"}\n` +
-		`**Ultimate Weapons**: ${"💀 ⌛ 💥 💰 🌀 / 🚀 🔦 ⚡ 🦠"}\n` +
-		`**Farming Strategy**: ${"Unspecified"}`;
 }

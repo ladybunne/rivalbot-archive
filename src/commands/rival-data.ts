@@ -6,6 +6,10 @@ const taglineCharLimit = 40;
 const tournamentStrategies: string[] = ["Unspecified", "Sandbag", "WAWSIS", "Blender", "Devo", "Hybrid", "Glass Cannon"];
 const farmingStrategies: string[] = ["Unspecified", "Blender", "Devo", "Orbdevo", "Maxdevo Only", "Maxdevo into Orbdevo", "Glass Cannon"];
 
+const workshopDamageCap = 6000;
+const workshopHealthCap = 5000;
+const workshopAbsdefCap = 5000;
+
 export const data = new SlashCommandBuilder()
 	.setName('rival-data')
 	.setDescription('Set your own rival data.')
@@ -35,13 +39,19 @@ export const data = new SlashCommandBuilder()
                     .setDescription("Your farming strategy.")
                     .addChoices( ...farmingStrategies.map((strat) => {
                         return { name: strat, value: strat }
-                    }))));
-    // .addSubcommand(subcommand => 
-    //     subcommand.setName("workshop")
-    //         .setDescription("Set data about your workshop and ultimate weapons.")
-    //         .addStringOption(option =>
-    //             option.setName("main-stats")
-    //                 .setDescription("Your main workshop stats (e.g. 1000/1200/900).")))
+                    }))))
+    .addSubcommand(subcommand => 
+        subcommand.setName("workshop")
+            .setDescription("Set data about your workshop and ultimate weapons.")
+            .addIntegerOption(option =>
+                option.setName("damage")
+                    .setDescription("Your Damage stat in your workshop."))
+            .addIntegerOption(option =>
+                option.setName("health")
+                    .setDescription("Your Health stat in your workshop."))
+            .addIntegerOption(option =>
+                option.setName("absdef")
+                    .setDescription("Your Absdef (Defense Absolute) stat in your workshop.")));
 
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply({ ephemeral: true });
@@ -91,11 +101,50 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         replied = true;
     }
 
+    const damage = interaction.options.getInteger("damage");
+    if(damage) {
+        if(damage <= workshopDamageCap) {
+            await rivalManager.updateRivalDamage(interaction.user.id, damage);
+            await interaction.followUp({ content: `Updated damage.`, ephemeral: true });
+            toUpdate = true;
+        }
+        else {
+            await interaction.followUp({ content: `Damage is too high (maximum of ${workshopDamageCap}).`, ephemeral: true });
+        }
+        replied = true;
+    }
+
+    const health = interaction.options.getInteger("health");
+    if(health) {
+        if(health <= workshopHealthCap) {
+            await rivalManager.updateRivalHealth(interaction.user.id, health);
+            await interaction.followUp({ content: `Updated health.`, ephemeral: true });
+            toUpdate = true;
+        }
+        else {
+            await interaction.followUp({ content: `Health is too high (maximum of ${workshopHealthCap}).`, ephemeral: true });
+        }
+        replied = true;
+    }
+
+    const absdef = interaction.options.getInteger("absdef");
+    if(absdef) {
+        if(absdef <= workshopAbsdefCap) {
+            await rivalManager.updateRivalAbsdef(interaction.user.id, absdef);
+            await interaction.followUp({ content: `Updated absdef.`, ephemeral: true });
+            toUpdate = true;
+        }
+        else {
+            await interaction.followUp({ content: `Absdef is too high (maximum of ${workshopAbsdefCap}).`, ephemeral: true });
+        }
+        replied = true;
+    }
+
     // Debug this.
     if(!replied) {
         await interaction.followUp({ content: `Please invoke this command with at least one argument. Otherwise it does nothing.`, ephemeral: true });    
     }
-    else {
+    else if(toUpdate) {
         // Use toUpdate here to do conditional updates on the rival cards.
         const thread = await rivalManager.createOrUpdateRivalCard(interaction.user.id, interaction.guild);
         await interaction.followUp({ content: `All data processed. See the updated rival card here: <#${thread.id}>`, ephemeral: true });
