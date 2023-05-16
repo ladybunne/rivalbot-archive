@@ -17,6 +17,9 @@ model Rival {
   startDate BigInt?
   tournamentStrategy String @default("Unspecified")
   farmingStrategy String @default("Unspecified")
+  damage Int?
+  health Int?
+  absdef Int?
   coinsUpdates CoinsUpdate[]
   tournamentUpdates TournamentUpdate[]
   rivalCardThreadId String?
