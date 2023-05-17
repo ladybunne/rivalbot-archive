@@ -102,7 +102,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const damage = interaction.options.getInteger("damage");
-    if(damage) {
+    if(damage != undefined) {
         if(damage <= workshopDamageCap) {
             await rivalManager.updateRivalDamage(interaction.user.id, damage);
             await interaction.followUp({ content: `Updated damage.`, ephemeral: true });
@@ -115,7 +115,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const health = interaction.options.getInteger("health");
-    if(health) {
+    if(health != undefined) {
         if(health <= workshopHealthCap) {
             await rivalManager.updateRivalHealth(interaction.user.id, health);
             await interaction.followUp({ content: `Updated health.`, ephemeral: true });
@@ -128,7 +128,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const absdef = interaction.options.getInteger("absdef");
-    if(absdef) {
+    if(absdef != undefined) {
         if(absdef <= workshopAbsdefCap) {
             await rivalManager.updateRivalAbsdef(interaction.user.id, absdef);
             await interaction.followUp({ content: `Updated absdef.`, ephemeral: true });
