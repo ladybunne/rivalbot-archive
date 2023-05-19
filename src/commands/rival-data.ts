@@ -1,10 +1,14 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ChatInputCommandInteraction, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import * as rivalManager from "../rivals/rival-manager";
+import * as ultimateWeaponManager from "../ultimate-weapons/ultimate-weapons-manager";
 
 const taglineCharLimit = 40;
 
 const tournamentStrategies: string[] = ["Unspecified", "Sandbag", "WAWSIS", "Blender", "Devo", "Hybrid", "Glass Cannon"];
 const farmingStrategies: string[] = ["Unspecified", "Blender", "Devo", "Orbdevo", "Maxdevo Only", "Maxdevo into Orbdevo", "Glass Cannon"];
+
+// This shouldn't be here, it should probably be in its own manager or something.
+const ultimateWeapons: string[] = ["Death Wave"];
 
 const workshopDamageCap = 6000;
 const workshopHealthCap = 5000;
@@ -51,7 +55,13 @@ export const data = new SlashCommandBuilder()
                     .setDescription("Your Health stat in your workshop."))
             .addIntegerOption(option =>
                 option.setName("absdef")
-                    .setDescription("Your Absdef (Defense Absolute) stat in your workshop.")));
+                    .setDescription("Your Absdef (Defense Absolute) stat in your workshop."))
+            .addStringOption(option => 
+                option.setName("ultimate-weapon")
+                    .setDescription("Modify the upgrades of your ultimate weapons.")
+                    .addChoices( ...ultimateWeapons.map((strat) => {
+                        return { name: strat, value: strat }
+                    }))));
 
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply({ ephemeral: true });
@@ -137,6 +147,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         else {
             await interaction.followUp({ content: `Absdef is too high (maximum of ${workshopAbsdefCap}).`, ephemeral: true });
         }
+        replied = true;
+    }
+
+    const ultimateWeapon = interaction.options.getString("ultimate-weapon");
+    if(ultimateWeapon) {
+        const rows = ultimateWeaponManager.generateUltimateWeaponDropdowns(ultimateWeapon);
+
+        await interaction.followUp({ content: `This is the dropdown thing.`, components: rows, ephemeral: false });
         replied = true;
     }
 
