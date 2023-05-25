@@ -6,6 +6,7 @@ export type RivalRank = {
     value: number;
     position: number | undefined;
     timestamp: number;
+    isStale: boolean;
 }
 
 // Types used in Leaderboard.
@@ -40,10 +41,12 @@ export class Leaderboard {
     private formatRivalRankLine(rivalRank: RivalRank, now: Date): string {
         const userDisplayName = rivalRank.name ?? "Unknown Rival";
 
-        return `${getBadgeByPosition(rivalRank.position)} ` +
-            `${rivalRank.position + 1}. ` +
-            `**${userDisplayName}**: ${this.formatValue(rivalRank.value)} ` +
-            `${getTimeSinceMostRecentEntry(Number(rivalRank.timestamp), now)}`;
+        return `${getBadgeByPosition(rivalRank.position)}` +
+            `#${rivalRank.position + 1} ` +
+            `${rivalRank.isStale ? "~~" : ""}` +
+            `**${userDisplayName}**: ${this.formatValue(rivalRank.value)}` +
+            `${rivalRank.isStale ? "~~" : ""}` +
+            ` ${getTimeSinceMostRecentEntry(Number(rivalRank.timestamp), now)}`;
     }
 
     /** Produces the 'description' field of the leaderboard embed. */
@@ -89,11 +92,11 @@ function getTimeSinceMostRecentEntry(timestamp: number, now: Date): string {
 function getBadgeByPosition(position: number): string {
     switch(position) {
         case 0:
-            return "🥇";
+            return "🥇 ";
         case 1:
-            return "🥈";
+            return "🥈 ";
         case 2:
-            return "🥉";
+            return "🥉 ";
         default:
             return "";
     }

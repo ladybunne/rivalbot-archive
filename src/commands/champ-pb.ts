@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction, InteractionResponse, ChatInputCommandInteraction, DataResolver, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import * as rivalManager from "../rivals/rival-manager";
 import * as tournamentManager from "../tournament/tournament-manager";
 
@@ -17,8 +17,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const outcome = await tournamentManager.update(interaction.user.id, waves, interaction.createdTimestamp, interaction.guild);
 
-	// Pull the proper version.
-	await interaction.editReply({ content: `Submitted a new champ PB of ${waves} waves for version ${"0.18.21"}.` });
+	// Do this properly, a la /lifetime-coins.
+	await interaction.editReply({ content: `Submitted a new champ PB of ${waves} waves for version ${tournamentManager.getTournamentVersion()} or newer.` });
 
     // Update Rival Card.
 	await rivalManager.createOrUpdateRivalCard(interaction.user.id, interaction.guild);

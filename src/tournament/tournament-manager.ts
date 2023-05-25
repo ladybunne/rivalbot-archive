@@ -9,8 +9,13 @@ let prisma: PrismaClient;
 
 let leaderboard: Leaderboard;
 
+let tournamentVersion: string;
+
+const STALE_POSITION_OFFSET = -999999;
+
 export async function start(guild: Guild, prismaClient: PrismaClient) {
 	prisma = prismaClient;
+	await loadTournamentVersion();
 	leaderboard = new Leaderboard("Top Champion Waves", getRivalRanks(guild), (waves: number) => `Wave ${waves}`)
 	scheduleLeaderboardUpdates(guild);
 	await updateLeaderboard(guild);
@@ -32,7 +37,8 @@ function getRivalRanks(guild: Guild): LeaderboardGetRivalRanks {
 				name: guild.members.cache.get(position.rivalId).user.username,
 				value: Number(position.waves),
 				position: i,
-				timestamp: Number(position.timestamp)
+				timestamp: Number(position.timestamp),
+				isStale: isTournamentUpdateStale(position)
 			}
 		});
 	}
@@ -63,7 +69,13 @@ async function getRivalPositions(): Promise<TournamentUpdate[]> {
 	));
 
 	// Some magic here to filter out falsy values (the `.filter(Boolean)` bit).
-	return positions.filter(Boolean).sort((a, b) => Number(b.waves - a.waves));
+	return positions.filter(Boolean).sort(sortPositions);
+}
+
+function sortPositions(a: TournamentUpdate, b: TournamentUpdate): number {
+	return Number(b.waves - a.waves) + 
+		(isTournamentUpdateStale(b) ? STALE_POSITION_OFFSET : 0) -
+		(isTournamentUpdateStale(a) ? STALE_POSITION_OFFSET : 0);
 }
 
 export async function update(id: string, waves: number, timestamp: number, guild: Guild): Promise<boolean> {
@@ -73,7 +85,7 @@ export async function update(id: string, waves: number, timestamp: number, guild
 		data: {
 			waves: waves,
 			timestamp: timestamp,
-            version: "0.18.21",
+            version: getTournamentVersion(),
 			rivalId: rival.id
 		}
 	});
@@ -85,4 +97,38 @@ export async function update(id: string, waves: number, timestamp: number, guild
 
 export async function leaderboardEmbed(): Promise<EmbedBuilder> {
 	return await leaderboard.leaderboardEmbed();
+}
+
+export async function setTournamentVersion(version: string, guild: Guild) {
+	await prisma.settings.upsert({
+		create: {
+			tournamentVersion: version
+		},
+		update: {
+			tournamentVersion: version
+		},
+		where: {
+			id: 1
+		},
+	});
+
+	tournamentVersion = version;
+	void updateLeaderboard(guild);
+}
+
+export function getTournamentVersion(): string {
+	return tournamentVersion;
+}
+
+export function isTournamentUpdateStale(update: TournamentUpdate) {
+	return update.version != getTournamentVersion();
+}
+
+async function loadTournamentVersion() {
+	const settings = await prisma.settings.findUnique({
+		where: {
+			id: 1
+		}
+	});
+	tournamentVersion = settings?.tournamentVersion ?? "0.19.8";
 }

@@ -11,6 +11,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Settings {
+  id Int @id @default(autoincrement())
+  tournamentVersion String
+}
+
 model Rival {
   id String @id @unique
   tagline String?
