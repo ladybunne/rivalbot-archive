@@ -36,7 +36,8 @@ function getRivalRanks(guild: Guild): LeaderboardGetRivalRanks {
 				name: guild.members.cache.get(position.rivalId).user.username,
 				value: Number(position.coins),
 				position: i,
-				timestamp: Number(position.timestamp)
+				timestamp: Number(position.timestamp),
+				isStale: false
 			}
 		});
 	}

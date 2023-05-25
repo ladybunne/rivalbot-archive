@@ -1,6 +1,7 @@
 import { PrismaClient, Rival, CoinsUpdate, TournamentUpdate } from "@prisma/client";
 import { EmbedBuilder, ForumChannel, Guild, GuildMember, ThreadChannel } from "discord.js";
 import { getDisplayCoins } from "../coins/coins-helpers";
+import * as tournamentManager from "../tournament/tournament-manager";
 import { channelRivalCardsId } from "../configs/rivalbot-config.json";
 import { DateTime } from "luxon";
 
@@ -239,8 +240,13 @@ export async function rivalCard(id: string, guild: Guild): Promise<EmbedBuilder 
 	// "1450, <t:1680300000:R>"
 	// TODO Add staling formatting here. I had an example somewhere.
 	const champPB = await getLatestTournamentUpdate(member.id);
+	const champPBIsStale = tournamentManager.isTournamentUpdateStale(champPB);
 	const champPBTimestamp = champPB ? Math.floor(Number(champPB.timestamp) / 1000) : "never";
-	const champPBFormatted = champPB ? `Wave ${champPB.waves}, <t:${champPBTimestamp}:R>` : "Unspecified";
+	const champPBFormatted = champPB ? 
+		`${champPBIsStale ? "~~" : ""}` +
+		`Wave ${champPB.waves}` +
+		`${champPBIsStale ? "~~" : ""}` +
+		`, <t:${champPBTimestamp}:R>` : "Unspecified";
 
 	const tournamentFieldDescription = `**Champ PB**: ${champPBFormatted}\n` +
 		`**Strategy**: ${rival.tournamentStrategy}`;
