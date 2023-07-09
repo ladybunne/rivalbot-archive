@@ -240,7 +240,7 @@ export async function rivalCard(id: string, guild: Guild): Promise<EmbedBuilder 
 	// "1450, <t:1680300000:R>"
 	// TODO Add staling formatting here. I had an example somewhere.
 	const champPB = await getLatestTournamentUpdate(member.id);
-	const champPBIsStale = tournamentManager.isTournamentUpdateStale(champPB);
+	const champPBIsStale = champPB ? tournamentManager.isTournamentUpdateStale(champPB) : false;
 	const champPBTimestamp = champPB ? Math.floor(Number(champPB.timestamp) / 1000) : "never";
 	const champPBFormatted = champPB ? 
 		`${champPBIsStale ? "~~" : ""}` +
