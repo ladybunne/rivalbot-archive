@@ -19,24 +19,29 @@ export function getDisplayCoins(coins: number): string {
 }
 
 function getUnitMultiplier(unit: string): number {
-	switch(unit.toLowerCase()) {
-		case "k": 
+	switch(unit) {
+		case "K": 
 			return 1_000;
-		case "m":
+		case "M":
 			return 1_000_000;
-		case "b":
+		case "B":
 			return 1_000_000_000;
-		case "t":
+		case "T":
 			return 1_000_000_000_000;
 		case "q":
 			return 1_000_000_000_000_000;
+		// TODO Figure out what to do with this at a later date.
+		// case "Q":
+		// 	return 1_000_000_000_000_000_000;
 		default:
 			return 1;
 	}
 }
 
 function getUnit(coins: number): string {
-	if(coins >= 1_000_000_000_000_000) return "Q";
+	// TODO Same here.
+	// if(coins >= 1_000_000_000_000_000_000) return "Q";
+	if(coins >= 1_000_000_000_000_000) return "q";
 	if(coins >= 1_000_000_000_000) return "T";
 	if(coins >= 1_000_000_000) return "B";
 	if(coins >= 1_000_000) return "M";
